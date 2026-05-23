@@ -127,7 +127,7 @@ Object.assign(Game, {
     const fy=e.y+Math.sin(fleeAngle)*e.speed*dt*1.3;
     if(this.dungeon.isPassable(Math.floor(fx),Math.floor(e.y)))e.x=fx;
     if(this.dungeon.isPassable(Math.floor(e.x),Math.floor(fy)))e.y=fy;
-    if(dist<1.0&&e.attackTimer<=0)this._enemyAttack(e);
+    if(dist<1.0&&e.attackTimer<=0)this._startEnemyWindup(e);
     return true;
   },
 
@@ -142,11 +142,35 @@ Object.assign(Game, {
     if(e.alertTimer>0)e.alertTimer-=dt;
   },
 
+  _startEnemyWindup(e){
+    e.windup=e.windupTime||.4;
+    e.attackTimer=e.attackCd; // lock out re-triggering until the strike resolves
+    const a=Util.angle(e.x,e.y,this.player.x,this.player.y);
+    e.attackDX=Math.cos(a);e.attackDY=Math.sin(a);
+  },
+
+  _updateEnemyWindup(e,dt,dist){
+    if(!(e.windup>0))return false;
+    e.windup-=dt;
+    if(e.windup<=0){
+      e.windup=0;
+      if(dist<1.5){
+        this._enemyAttack(e); // strike lands
+      }else{
+        // player slipped out of reach — the blow whiffs
+        e.attackTimer=(e.attackCd||1)*.6;
+        this.floatingText.add(e.x+.5,e.y-.4,'…','#bbb',.4);
+        e.attackAnim=.18; // still swing, just hit nothing
+      }
+    }
+    return true; // committed this frame: skip movement/other AI
+  },
+
   _runEnemyCombatBehavior(e,dist,dt){
     this._tryEliteRiftPulse(e,dist,dt);
     this._tryEliteObeliskPulse(e,dist,dt);
     if(dist<1.2&&e.attackTimer<=0){
-      this._enemyAttack(e);
+      this._startEnemyWindup(e);
     }else if(e.ai==='ranged'&&dist<6&&dist>2&&e.attackTimer<=0){
       this._enemyRangedAttack(e);
     }else if(dist>1.2){
@@ -276,6 +300,7 @@ Object.assign(Game, {
       // stealth check
       if(p.stealthTimer>0&&dist>2&&!e.alerted)continue;
 
+      if(this._updateEnemyWindup(e,dt,dist))continue;
       if(this._runUnalertedEnemyAi(e,dt))continue;
       if(this._tryFleeEnemy(e,p,dist,dt))continue;
 

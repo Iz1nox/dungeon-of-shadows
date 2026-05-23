@@ -351,6 +351,23 @@ Object.assign(Game, {
     ctx.beginPath();ctx.roundRect(barX,barY,barW*hpPct,barH,1.5);ctx.fill();
   },
 
+  _renderEnemyWindup(ctx,e,ecx,ecy){
+    if(!(e.windup>0))return;
+    const wt=e.windupTime||.4;
+    const prog=Util.clamp(1-e.windup/wt,0,1); // 0 -> 1 as the strike nears
+    const r=TILE_SIZE*(.5+prog*.35);
+    ctx.globalAlpha=.35+prog*.45;
+    ctx.strokeStyle='#ff3322';ctx.lineWidth=2+prog*1.5;
+    ctx.beginPath();ctx.arc(ecx,ecy,r,0,Math.PI*2);ctx.stroke();
+    // strike direction wedge
+    const a=Math.atan2(e.attackDY||0,e.attackDX||0);
+    ctx.beginPath();ctx.moveTo(ecx,ecy);
+    ctx.lineTo(ecx+Math.cos(a)*r,ecy+Math.sin(a)*r);
+    ctx.stroke();
+    if(prog>.82){ctx.globalAlpha=(prog-.82)*3;ctx.fillStyle='#ff5533';ctx.beginPath();ctx.arc(ecx,ecy,r*.55,0,Math.PI*2);ctx.fill();}
+    ctx.globalAlpha=1;
+  },
+
   _renderBossAura(ctx,e,sx,sy){
     if(!e.isBoss)return;
     ctx.globalAlpha=.3+Math.sin(this.animTime*4)*.15;
@@ -367,6 +384,7 @@ Object.assign(Game, {
     this._renderEnemyHitFlash(ctx,e,ecx,ecy);
     this._renderEnemyFreezeEffect(ctx,e,ecx,ecy);
     this._renderEnemyBody(ctx,e,ecx,ecy,sy);
+    this._renderEnemyWindup(ctx,e,ecx,ecy);
     this._renderEnemyNameLabel(ctx,e,ecx,sy);
     this._renderEnemyHpBar(ctx,e,sx,sy);
     this._renderBossAura(ctx,e,sx,sy);
