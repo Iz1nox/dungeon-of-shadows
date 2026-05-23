@@ -154,7 +154,11 @@ Object.assign(Game, {
   },
 
   _computePlayerMoveTarget(p,dx,dy,dt){
-    const speed=p.speed*(p.stealthTimer>0?0.7:1);
+    let speed=p.speed*(p.stealthTimer>0?0.7:1);
+    // water slows movement — applied BEFORE collision so it never bypasses walls
+    const tx=Math.floor(p.x+.5),ty=Math.floor(p.y+.5);
+    const curTile=this.dungeon.map[ty]?this.dungeon.map[ty][tx]:0;
+    if(curTile===TILE.WATER)speed*=0.5;
     return{
       nx:p.x+dx*speed*dt,
       ny:p.y+dy*speed*dt
@@ -180,7 +184,7 @@ Object.assign(Game, {
     p.animTimer+=dt;
   },
 
-  _applyPlayerTileEffects(p,nx){
+  _applyPlayerTileEffects(p){
     const tileX=Math.floor(p.x+.5),tileY=Math.floor(p.y+.5);
     const tile=this.dungeon.map[tileY]?this.dungeon.map[tileY][tileX]:0;
     if(tile===TILE.LAVA){
@@ -208,9 +212,6 @@ Object.assign(Game, {
       this.sound.hit();
       this._trapCooldown=true;
       setTimeout(()=>this._trapCooldown=false,1000);
-    }
-    if(tile===TILE.WATER){
-      p.x=Util.lerp(p.x,nx,.5);
     }
   },
 

@@ -6,7 +6,7 @@ Object.assign(Game, {
     const {nx,ny}=this._computePlayerMoveTarget(p,dx,dy,dt);
     this._applyPlayerCollisionMovement(p,nx,ny);
     this._updatePlayerAnimationState(p,dx,dy,dt);
-    this._applyPlayerTileEffects(p,nx);
+    this._applyPlayerTileEffects(p);
     this._updateMouseWorldPosition();
     this._autoPickupNearbyGold(p);
     this._updatePlayerFov(p);
