@@ -368,6 +368,21 @@ Object.assign(Game, {
     ctx.globalAlpha=1;
   },
 
+  _renderChargerWindup(ctx,e,ecx,ecy){
+    if(e.chargeState!=='windup')return;
+    const wt=e.chargeWindupTime||.6;
+    const prog=Util.clamp(1-e.chargeWindup/wt,0,1);
+    const a=Math.atan2(e.chargeDY||0,e.chargeDX||0);
+    const len=TILE_SIZE*(2.5+prog*3.5);
+    ctx.globalAlpha=.35+prog*.45;
+    ctx.strokeStyle='#ff5522';ctx.lineWidth=2.5;ctx.setLineDash([6,5]);
+    ctx.beginPath();ctx.moveTo(ecx,ecy);ctx.lineTo(ecx+Math.cos(a)*len,ecy+Math.sin(a)*len);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha=.3+prog*.5;
+    ctx.beginPath();ctx.arc(ecx,ecy,TILE_SIZE*(.55+prog*.2),0,Math.PI*2);ctx.stroke();
+    ctx.globalAlpha=1;
+  },
+
   _renderBossAura(ctx,e,sx,sy){
     if(!e.isBoss)return;
     ctx.globalAlpha=.3+Math.sin(this.animTime*4)*.15;
@@ -385,6 +400,7 @@ Object.assign(Game, {
     this._renderEnemyFreezeEffect(ctx,e,ecx,ecy);
     this._renderEnemyBody(ctx,e,ecx,ecy,sy);
     this._renderEnemyWindup(ctx,e,ecx,ecy);
+    this._renderChargerWindup(ctx,e,ecx,ecy);
     this._renderEnemyNameLabel(ctx,e,ecx,sy);
     this._renderEnemyHpBar(ctx,e,sx,sy);
     this._renderBossAura(ctx,e,sx,sy);

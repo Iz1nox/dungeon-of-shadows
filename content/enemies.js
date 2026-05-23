@@ -6,6 +6,7 @@ const EnemyDB = {
     {name:'Nietoperz',icon:'🦇',hp:10,atk:4,def:0,xp:6,gold:1,speed:2,ai:'erratic',color:'#88a'},
     {name:'Szkielet',icon:'💀',hp:30,atk:6,def:2,xp:15,gold:5,speed:.8,ai:'chase',color:'#dda'},
     {name:'Goblin',icon:'👺',hp:25,atk:8,def:1,xp:12,gold:8,speed:1,ai:'chase',color:'#6a6'},
+    {name:'Dzik Otchłani',icon:'🐗',hp:46,atk:11,def:2,xp:24,gold:9,speed:.9,ai:'charger',color:'#b6764a',attackCd:1.1,chargeWindupTime:.6,chargeSpeed:10,chargeDashTime:.4,chargeCdMax:3.5,chargeBonus:7},
     {name:'Zombie',icon:'🧟',hp:50,atk:10,def:3,xp:20,gold:6,speed:.5,ai:'chase',color:'#686'},
     {name:'Ork',icon:'👹',hp:60,atk:12,def:5,xp:25,gold:12,speed:.7,ai:'patrol',color:'#8a6'},
     {name:'Mag Cieni',icon:'🧙',hp:35,atk:15,def:2,xp:30,gold:15,speed:.6,ai:'ranged',color:'#a6a',ranged:true,attackCd:1.35,projectileColor:'#d7a8ff',projectileSpeed:6.2},

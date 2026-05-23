@@ -106,7 +106,7 @@ Object.assign(Game, {
 
   _runUnalertedEnemyAi(e,dt){
     if(e.alerted)return false;
-    if(e.ai==='wander'||e.ai==='patrol'){
+    if(e.ai==='wander'||e.ai==='patrol'||e.ai==='charger'){
       if(!e.patrolTarget||Util.dist(e.x,e.y,e.patrolTarget.x,e.patrolTarget.y)<1||Math.random()<dt*.1){
         e.patrolTarget={x:e.x+Util.rand(-5,5),y:e.y+Util.rand(-5,5)};
       }
@@ -177,6 +177,68 @@ Object.assign(Game, {
       this._tryEliteTeleportBlink(e,dist,dt);
       this._chaseEnemyTowardPlayer(e,dt);
     }
+  },
+
+  _chargeImpact(e){
+    const p=this.player;
+    const dmg=Math.max(1,Math.floor((e.atk+(e.chargeBonus||6))-p.def+Util.rand(-2,3)));
+    this._lastAttacker=e;
+    this.damagePlayer(dmg,`${e.icon} ${e.name} taranuje za ${dmg}!`,'damage');
+    // knock the player back along the charge line
+    const a=Util.angle(e.x,e.y,p.x,p.y);
+    const kx=p.x+Math.cos(a)*.8,ky=p.y+Math.sin(a)*.8;
+    if(this.dungeon.isPassable(Math.floor(kx),Math.floor(p.y)))p.x=kx;
+    if(this.dungeon.isPassable(Math.floor(p.x),Math.floor(ky)))p.y=ky;
+    this.screenFX.shake(6,.25);
+    this.particles.burst(p.x+.5,p.y+.5,16,'#f80',3,.4,3);
+    this.sound.playerHit();
+  },
+
+  _updateCharger(e,dt,dist){
+    const p=this.player;
+    e.chargeCd=Math.max(0,(e.chargeCd||0)-dt);
+    // committed wind-up: stand still and telegraph
+    if(e.chargeState==='windup'){
+      e.chargeWindup-=dt;
+      if(e.chargeWindup<=0){e.chargeState='dash';e.chargeTime=e.chargeDashTime||.4;}
+      return;
+    }
+    // dashing in a straight line
+    if(e.chargeState==='dash'){
+      e.chargeTime-=dt;
+      const sp=e.chargeSpeed||9;
+      let hitWall=false;
+      const nx=e.x+e.chargeDX*sp*dt,ny=e.y+e.chargeDY*sp*dt;
+      if(this.dungeon.isPassable(Math.floor(nx),Math.floor(e.y)))e.x=nx;else hitWall=true;
+      if(this.dungeon.isPassable(Math.floor(e.x),Math.floor(ny)))e.y=ny;else hitWall=true;
+      if(Util.chance(.6))this.particles.burst(e.x+.5,e.y+.5,1,e.color||'#fa6',1,.18,2);
+      if(Util.dist(e.x,e.y,p.x,p.y)<1.0){
+        this._chargeImpact(e);
+        e.chargeState='';e.chargeCd=e.chargeCdMax||3.5;
+        return;
+      }
+      if(hitWall||e.chargeTime<=0){
+        e.chargeState='';e.chargeCd=e.chargeCdMax||3.5;
+        if(hitWall){
+          e.stunTimer=Math.max(e.stunTimer||0,.9);
+          this.particles.burst(e.x+.5,e.y+.5,10,'#bbb',2,.4,2.5);
+          this.screenFX.shake(2,.1);
+        }
+      }
+      return;
+    }
+    // ready to charge from a medium distance -> begin telegraphed wind-up
+    if(e.chargeCd<=0&&dist>=2.2&&dist<=6.5){
+      e.chargeState='windup';
+      e.chargeWindup=e.chargeWindupTime||.6;
+      const a=Util.angle(e.x,e.y,p.x,p.y);
+      e.chargeDX=Math.cos(a);e.chargeDY=Math.sin(a);
+      e.attackDX=e.chargeDX;e.attackDY=e.chargeDY;
+      return;
+    }
+    // close range -> normal telegraphed melee; otherwise close the gap
+    if(dist<1.3&&e.attackTimer<=0){this._startEnemyWindup(e);return;}
+    this._chaseEnemyTowardPlayer(e,dt);
   },
 
   _handleEnemyDeath(e){
@@ -305,6 +367,7 @@ Object.assign(Game, {
       if(this._tryFleeEnemy(e,p,dist,dt))continue;
 
       this._updateEnemyPackAlert(e,dt);
+      if(e.ai==='charger'){this._updateCharger(e,dt,dist);continue;}
       this._runEnemyCombatBehavior(e,dist,dt);
     }
 
