@@ -131,7 +131,10 @@ class DungeonGenerator {
       const cy=Util.rand(room.y,room.y+room.h-1);
       if(this.map[cy][cx]===TILE.FLOOR)this.map[cy][cx]=TILE.CHEST;
     }
-    
+
+    // secret caches: a hidden chest behind a disguised wall
+    this._placeSecretCaches();
+
     // shrine (1 per floor) — never overwrite stairs
     if(Util.chance(.5)){
       const candidates=this.rooms.filter(r=>this.map[r.cy][r.cx]!==TILE.STAIRS_DOWN&&this.map[r.cy][r.cx]!==TILE.STAIRS_UP);
@@ -222,16 +225,50 @@ class DungeonGenerator {
     }
   }
 
+  _placeSecretCaches(){
+    const dirs=[[0,-1],[0,1],[-1,0],[1,0]];
+    const maxCaches=Util.rand(1,2);
+    let placed=0;
+    for(const room of Util.shuffle(this.rooms.slice())){
+      if(placed>=maxCaches)break;
+      const spots=[];
+      for(let y=room.y;y<room.y+room.h;y++)for(let x=room.x;x<room.x+room.w;x++){
+        if(this.map[y]?.[x]!==TILE.FLOOR)continue;
+        for(const[dx,dy]of dirs){
+          const wx=x+dx,wy=y+dy;        // wall to disguise
+          const bx=x+dx*2,by=y+dy*2;    // hidden cache cell
+          if(wx<1||wy<1||wx>=this.w-1||wy>=this.h-1)continue;
+          if(bx<1||by<1||bx>=this.w-1||by>=this.h-1)continue;
+          if(this.map[wy][wx]!==TILE.WALL||this.map[by][bx]!==TILE.WALL)continue;
+          // the cache must be a sealed pocket (only opened by the secret wall)
+          let sealed=true;
+          for(const[ex,ey]of dirs){
+            const nx=bx+ex,ny=by+ey;
+            if(nx===wx&&ny===wy)continue;
+            if(this.map[ny]?.[nx]!==TILE.WALL){sealed=false;break;}
+          }
+          if(sealed)spots.push({wx,wy,bx,by});
+        }
+      }
+      if(spots.length){
+        const s=Util.pick(spots);
+        this.map[s.by][s.bx]=TILE.CHEST;
+        this.map[s.wy][s.wx]=TILE.SECRET_WALL;
+        placed++;
+      }
+    }
+  }
+
   isPassable(x,y){
     if(x<0||x>=this.w||y<0||y>=this.h)return false;
     const t=this.map[y][x];
-    return t!==TILE.VOID&&t!==TILE.WALL;
+    return t!==TILE.VOID&&t!==TILE.WALL&&t!==TILE.SECRET_WALL;
   }
 
   isTransparent(x,y){
     if(x<0||x>=this.w||y<0||y>=this.h)return false;
     const t=this.map[y][x];
-    return t!==TILE.VOID&&t!==TILE.WALL&&t!==TILE.DOOR;
+    return t!==TILE.VOID&&t!==TILE.WALL&&t!==TILE.SECRET_WALL&&t!==TILE.DOOR;
   }
 }
 

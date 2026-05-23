@@ -319,11 +319,33 @@ Object.assign(Game, {
     }
   },
   
+  _revealAdjacentSecretWalls(){
+    const p=this.player;
+    const px=Math.floor(p.x+.5),py=Math.floor(p.y+.5);
+    let revealed=0;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+      const x=px+dx,y=py+dy;
+      if(this.dungeon.map[y]&&this.dungeon.map[y][x]===TILE.SECRET_WALL){
+        this.dungeon.map[y][x]=TILE.FLOOR;
+        this.dungeon.explored[y][x]=1;this.dungeon.visible[y][x]=1;
+        this.particles.burst(x+.5,y+.5,14,'#9a8466',2,.5,3);
+        revealed++;
+      }
+    }
+    if(revealed){
+      this.log('🧱 Odkryto ukrytą komnatę!','item');
+      this.sound.door();
+      this.screenFX.shake(2,.15);
+      FOV.compute(this.dungeon,px,py,FOV_RADIUS);
+    }
+    return revealed;
+  },
+
   interact(){
     const p=this.player;
     const tx=Math.floor(p.x+.5),ty=Math.floor(p.y+.5);
     const tile=this.dungeon.map[ty][tx];
-    this._handleTileInteraction(tile,tx,ty);
+    if(!this._handleTileInteraction(tile,tx,ty))this._revealAdjacentSecretWalls();
   },
   
   // ---- LEVEL UP ----

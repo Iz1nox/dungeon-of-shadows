@@ -131,6 +131,7 @@ Object.assign(Game, {
         break; // hit one enemy at a time for melee
       }
     }
+    this._revealAdjacentSecretWalls();
     return hit;
   },
   

@@ -603,6 +603,17 @@ Object.assign(Game, {
         this._renderWallTile(ctx,x,y,sx,sy);
         break;
       }
+      case TILE.SECRET_WALL: {
+        this._renderWallTile(ctx,x,y,sx,sy);
+        // faint crack hint only when the player is right beside it
+        if(Math.abs(x-Math.floor(this.player.x+.5))<=1&&Math.abs(y-Math.floor(this.player.y+.5))<=1){
+          ctx.globalAlpha=.22+Math.sin(this.animTime*3)*.1;
+          ctx.strokeStyle='#6a5640';ctx.lineWidth=1;
+          ctx.beginPath();ctx.moveTo(sx+9,sy+3);ctx.lineTo(sx+15,sy+15);ctx.lineTo(sx+11,sy+28);ctx.stroke();
+          ctx.globalAlpha=1;
+        }
+        break;
+      }
       case TILE.FLOOR:
       case TILE.CORRIDOR: {
         this._renderFloorTile(ctx,x,y,sx,sy);

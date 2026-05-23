@@ -31,7 +31,7 @@ class SoundFX {
   boss(){
     [200,150,100,80].forEach((f,i)=>setTimeout(()=>this._play(f,'sawtooth',.3,.12),i*200));
   }
-  footstep(){this._play(60+Math.random()*25,'square',.05,.04);}
+  footstep(){this._play(52+Math.random()*16,'triangle',.04,.018);}
   crit(){this._play(720,'square',.05,.13);setTimeout(()=>this._play(300,'sawtooth',.13,.13),30);}
   heartbeat(){this._play(58,'sine',.16,.2);setTimeout(()=>this._play(48,'sine',.22,.16),170);}
   ui(){this._play(440,'triangle',.05,.05);}
