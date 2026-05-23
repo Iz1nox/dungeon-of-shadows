@@ -1,0 +1,10 @@
+# Backups
+*.bak
+
+# Local / machine-specific config
+**/settings.local.json
+
+# OS junk
+Thumbs.db
+desktop.ini
+.DS_Store
