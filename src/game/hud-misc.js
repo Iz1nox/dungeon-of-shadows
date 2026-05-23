@@ -130,6 +130,7 @@ Object.assign(Game, {
   // ---- GAME OVER ----
   gameOver(){
     this.running=false;
+    this.sound.stopAmbient();
     this.sound.death();
     this._showEndScreen('death-screen','death-stats',this._buildRunSummaryLine());
   },
@@ -141,6 +142,7 @@ Object.assign(Game, {
     if((this._potionsUsed||0)===0)this._flawlessVictories=(this._flawlessVictories||0)+1;
     Achievements.checkAll(this);
     this.running=false;
+    this.sound.stopAmbient();
     this._showEndScreen('win-screen','win-stats',`${this._buildRunSummaryLine()}<br>Pokonałeś wszystkie ${MAX_FLOOR} pięter lochu!`);
   },
   

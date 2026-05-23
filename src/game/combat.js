@@ -123,6 +123,7 @@ Object.assign(Game, {
         if(isCrit){
           this.floatingText.add(e.x+.5,e.y-1.1,'KRYTYK!','#f44',1.2);
           this.log(`💥 Trafienie krytyczne! ${dmg} obrażeń`,'crit');
+          this.sound.crit();
           this.screenFX.shake(5,.2);
           this.screenFX.flash('#ffcc44',.05);
         }

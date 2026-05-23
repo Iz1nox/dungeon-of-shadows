@@ -2,6 +2,7 @@
 Object.assign(Game, {
   toggleInventory(){
     const panel=document.getElementById('inventory-panel');
+    this.sound.ui();
     panel.classList.toggle('open');
     if(panel.classList.contains('open'))this.updateInventoryUI();
     else this.hideItemTooltip();

@@ -31,5 +31,34 @@ class SoundFX {
   boss(){
     [200,150,100,80].forEach((f,i)=>setTimeout(()=>this._play(f,'sawtooth',.3,.12),i*200));
   }
+  footstep(){this._play(60+Math.random()*25,'square',.05,.04);}
+  crit(){this._play(720,'square',.05,.13);setTimeout(()=>this._play(300,'sawtooth',.13,.13),30);}
+  heartbeat(){this._play(58,'sine',.16,.2);setTimeout(()=>this._play(48,'sine',.22,.16),170);}
+  ui(){this._play(440,'triangle',.05,.05);}
+  buy(){this._play(520,'sine',.07,.07);setTimeout(()=>this._play(740,'sine',.1,.07),70);}
+  startAmbient(theme){
+    if(!this.enabled)return;
+    this.stopAmbient();
+    try{
+      if(this.ctx.state==='suspended')this.ctx.resume();
+      const base=(theme&&theme.ambientFreq)||50;
+      const vol=(theme&&theme.ambientVol)||.05;
+      const g=this.ctx.createGain();g.gain.value=0;g.connect(this.ctx.destination);
+      const o1=this.ctx.createOscillator();o1.type='sine';o1.frequency.value=base;
+      const o2=this.ctx.createOscillator();o2.type='sine';o2.frequency.value=base*1.5+.4;
+      o1.connect(g);o2.connect(g);o1.start();o2.start();
+      g.gain.setTargetAtTime(vol,this.ctx.currentTime,2);
+      this._ambient={g,o1,o2};
+    }catch(e){}
+  }
+  stopAmbient(){
+    if(!this._ambient)return;
+    try{
+      const {g,o1,o2}=this._ambient;
+      g.gain.setTargetAtTime(0,this.ctx.currentTime,.4);
+      o1.stop(this.ctx.currentTime+1);o2.stop(this.ctx.currentTime+1);
+    }catch(e){}
+    this._ambient=null;
+  }
 }
 

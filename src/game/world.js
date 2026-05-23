@@ -197,6 +197,7 @@ Object.assign(Game, {
     
     this.log(`📍 Piętro ${this.floor}`,this.floor%3===0?'boss':'info');
     this.floorTheme=FloorThemes.getTheme(this.floor);
+    this.sound.startAmbient(this.floorTheme);
     this.log(`🏰 ${this.floorTheme.name}`,'info');
     const eventTrace=this._getFloorEventTraceSummary();
     if(eventTrace)this.log(eventTrace.longText,'info');

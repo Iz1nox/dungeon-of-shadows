@@ -4,7 +4,10 @@ Object.assign(Game, {
     const p=this.player;
     const {dx,dy}=this._getPlayerInputVector();
     const {nx,ny}=this._computePlayerMoveTarget(p,dx,dy,dt);
+    const ox=p.x,oy=p.y;
     this._applyPlayerCollisionMovement(p,nx,ny);
+    this._footstepTimer=(this._footstepTimer||0)-dt;
+    if((p.x!==ox||p.y!==oy)&&this._footstepTimer<=0){this.sound.footstep();this._footstepTimer=.3;}
     this._updatePlayerAnimationState(p,dx,dy,dt);
     this._applyPlayerTileEffects(p);
     this._updateMouseWorldPosition();

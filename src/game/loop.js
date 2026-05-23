@@ -46,10 +46,21 @@ Object.assign(Game, {
     this.screenFX.update(dt);
   },
 
+  _updateLowHpHeartbeat(dt){
+    const p=this.player;
+    if(p&&p.hp>0&&p.hp/p.maxHp<.25){
+      this._heartbeatTimer=(this._heartbeatTimer||0)-dt;
+      if(this._heartbeatTimer<=0){this.sound.heartbeat();this._heartbeatTimer=1.1;}
+    }else{
+      this._heartbeatTimer=0;
+    }
+  },
+
   _updateCoreSystems(dt){
     this._updateEntityCombatSystems(dt);
     this._updateRuntimeVisualSystems(dt);
     this.updateSpellCooldowns(dt);
+    this._updateLowHpHeartbeat(dt);
   },
 
   _getCameraTargetPosition(){

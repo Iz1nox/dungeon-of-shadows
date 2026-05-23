@@ -41,6 +41,7 @@ Object.assign(Game, {
   
   toggleSettings(){
     const panel=document.getElementById('settings-panel');
+    this.sound.ui();
     const isOpen=panel.classList.contains('open');
     if(isOpen){
       this._closeSettingsPanel();

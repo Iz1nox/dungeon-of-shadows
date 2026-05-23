@@ -689,6 +689,8 @@ Object.assign(Game, {
     this.initSpellBar();
     this._ensureHudRefs();
     this._resetUICaches();
+    this.floorTheme=FloorThemes.getTheme(this.floor);
+    this.sound.startAmbient(this.floorTheme);
     FOV.compute(this.dungeon,Math.floor(this.player.x+.5),Math.floor(this.player.y+.5),FOV_RADIUS);
     document.getElementById('message-log').innerHTML='';
   },

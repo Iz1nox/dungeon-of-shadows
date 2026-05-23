@@ -118,7 +118,7 @@ Object.assign(Game, {
     const p=this.player;
     p.gold-=item.price;
     this.log(`🛒 Kupiono: ${bought.icon} ${bought.name} za ${item.price}💰 (zostało: ${p.gold}💰)`,'item');
-    this.sound.pickup();
+    this.sound.buy();
   },
 
   _validateShopBuyIndex(idx){
