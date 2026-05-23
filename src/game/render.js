@@ -480,20 +480,35 @@ Object.assign(Game, {
   },
 
   _renderFogOfWar(ctx,startTX,startTY,endTX,endTY,cx,cy){
+    const vis=this.dungeon.visible,exp=this.dungeon.explored;
+    ctx.fillStyle='#05070d'; // cold "memory" tint instead of flat black
     for(let y=startTY;y<endTY;y++){
       for(let x=startTX;x<endTX;x++){
-        if(!this.dungeon.visible[y][x]&&this.dungeon.explored[y][x]){
-          ctx.globalAlpha=.55;ctx.fillStyle='#000';
-          ctx.fillRect(x*TILE_SIZE-cx,y*TILE_SIZE-cy,TILE_SIZE,TILE_SIZE);
+        if(vis[y][x]||!exp[y][x])continue;
+        // lighter fog on tiles bordering the visible area -> soft gradient edge
+        let nearVisible=false;
+        for(let dy=-1;dy<=1&&!nearVisible;dy++)for(let dx=-1;dx<=1;dx++){
+          const ny=y+dy,nx=x+dx;
+          if(vis[ny]&&vis[ny][nx]){nearVisible=true;break;}
         }
+        ctx.globalAlpha=nearVisible?.34:.62;
+        ctx.fillRect(x*TILE_SIZE-cx,y*TILE_SIZE-cy,TILE_SIZE,TILE_SIZE);
       }
     }
     ctx.globalAlpha=1;
   },
 
   _emitFloorAmbientParticles(){
-    if(!this.floorTheme||!this.floorTheme.particles)return;
+    if(!this.floorTheme)return;
     const pt=this.floorTheme.particles;
+    if(!pt){
+      // floors without a signature effect still get faint drifting dust motes
+      if(Util.chance(.015)){
+        const rx=this.player.x+Util.randF(-8,8),ry=this.player.y+Util.randF(-6,6);
+        this.particles.burst(rx,ry,1,'#6a5f4a',.6,.12,.5);
+      }
+      return;
+    }
     if(pt==='drip'&&Util.chance(.02)){
       const rx=this.player.x+Util.randF(-8,8),ry=this.player.y+Util.randF(-6,6);
       this.particles.burst(rx,ry,1,'#48a',1,.2,1);

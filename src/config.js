@@ -15,7 +15,7 @@ const SAVE_COMPAT_TAG = 'DOS-2.x';
 
 const EVENT_BALANCE = {
   eventRepeatCooldownFloors:1,
-  relicSpawnChance:1.0, // TEST: bylo .38
+  relicSpawnChance:.38,
   wellSpawnChance:.28,
   riftSpawnChance:.22,
   obeliskSpawnChance:.17,
