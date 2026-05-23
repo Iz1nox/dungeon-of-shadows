@@ -85,12 +85,34 @@ Object.assign(Game, {
   },
 
   _renderTrapTile(ctx,sx,sy,visible){
-    ctx.fillStyle='#1a1510';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
-    if(visible&&this.player.class==='rogue'){
-      ctx.strokeStyle='rgba(255,0,0,0.4)';ctx.setLineDash([2,2]);
-      ctx.strokeRect(sx+4,sy+4,TILE_SIZE-8,TILE_SIZE-8);
-      ctx.setLineDash([]);
+    const cx=sx+TILE_SIZE/2,cy=sy+TILE_SIZE/2;
+    // stone pressure plate, distinct from plain floor
+    ctx.fillStyle='#241a14';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
+    ctx.strokeStyle='rgba(0,0,0,0.55)';ctx.lineWidth=1;
+    ctx.strokeRect(sx+3.5,sy+3.5,TILE_SIZE-7,TILE_SIZE-7);
+    ctx.fillStyle='#3a2c20';
+    for(const[rx,ry]of[[5,5],[TILE_SIZE-5,5],[5,TILE_SIZE-5],[TILE_SIZE-5,TILE_SIZE-5]]){
+      ctx.beginPath();ctx.arc(sx+rx,sy+ry,1.5,0,Math.PI*2);ctx.fill();
     }
+    // spike holes
+    ctx.fillStyle='#0c0806';
+    for(const[dx,dy]of[[0,0],[-6,0],[6,0],[0,-6],[0,6]]){
+      ctx.beginPath();ctx.arc(cx+dx,cy+dy,1.7,0,Math.PI*2);ctx.fill();
+    }
+    if(!visible)return;
+    const pulse=.5+Math.sin(this.animTime*5)*.5;
+    // pulsing danger glow — readable for ALL classes
+    ctx.globalAlpha=.16+pulse*.22;
+    ctx.fillStyle='#ff5a1e';
+    ctx.fillRect(sx+2,sy+2,TILE_SIZE-4,TILE_SIZE-4);
+    ctx.globalAlpha=1;
+    // warning triangle (brighter for rogue, who reads traps best)
+    ctx.globalAlpha=(this.player.class==='rogue'?.7:.45)+pulse*.3;
+    ctx.strokeStyle='#ffb04a';ctx.lineWidth=1.6;ctx.lineJoin='round';
+    ctx.beginPath();ctx.moveTo(cx,cy-6);ctx.lineTo(cx+6,cy+5);ctx.lineTo(cx-6,cy+5);ctx.closePath();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,cy-2);ctx.lineTo(cx,cy+1.5);ctx.stroke();
+    ctx.fillStyle='#ffb04a';ctx.beginPath();ctx.arc(cx,cy+3.5,.85,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;
   },
 
   _renderChestTile(ctx,sx,sy,alpha){
