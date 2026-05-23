@@ -18,7 +18,10 @@ Esc — Ustawienia / Zapisz / Wczytaj | <span id="title-debug-key">F3</span> —
 <button onclick="Game.start('warrior')">⚔️ Wojownik</button>
 <button onclick="Game.start('mage')">🔮 Mag</button>
 <button onclick="Game.start('rogue')">🗡️ Łotrzyk</button>
-<div style="margin-top:20px"><button onclick="Game.loadFromTitle()" style="background:linear-gradient(to bottom,#246,#124);border-color:#48a;padding:10px 30px;font-size:15px">📂 Wczytaj zapis</button></div>
+<div style="margin-top:20px">
+<button onclick="Game.loadFromTitle()" style="padding:10px 30px;font-size:15px">📂 Wczytaj zapis</button>
+<button onclick="Game.openMeta()" style="padding:10px 30px;font-size:15px">🔮 Sanktuarium Dusz</button>
+</div>
 </div>
 
 <div id="death-screen">
@@ -70,6 +73,7 @@ Esc — Ustawienia / Zapisz / Wczytaj | <span id="title-debug-key">F3</span> —
 <div id="tooltip"></div>
 <div id="item-tooltip"></div>
 <div id="settings-panel"></div>
+<div id="meta-panel"></div>
 <div id="save-toast"></div>
 <div id="shop-panel"></div>
 <div id="floor-transition"><h1 id="ft-title"></h1><div class="floor-sub" id="ft-sub"></div></div>
@@ -96,6 +100,7 @@ Esc — Ustawienia / Zapisz / Wczytaj | <span id="title-debug-key">F3</span> —
 <script src="src/projectile.js"></script>
 <script src="src/effects.js"></script>
 <script src="src/sound.js"></script>
+<script src="src/meta.js"></script>
 <!-- Main Game object, split by domain (core first, init last) -->
 <script src="src/game/core.js"></script>
 <script src="src/game/lifecycle.js"></script>
@@ -113,6 +118,7 @@ Esc — Ustawienia / Zapisz / Wczytaj | <span id="title-debug-key">F3</span> —
 <script src="src/game/progression.js"></script>
 <script src="src/game/inventory-ui.js"></script>
 <script src="src/game/ui-settings.js"></script>
+<script src="src/game/meta-ui.js"></script>
 <script src="src/game/save.js"></script>
 <script src="src/game/hud-misc.js"></script>
 <script src="src/game/shop.js"></script>

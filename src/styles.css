@@ -179,3 +179,16 @@ canvas{display:block;image-rendering:pixelated;cursor:crosshair}
 #quickslots .qs .qs-key{position:absolute;top:1px;left:3px;font-size:8px;color:var(--brass-lt)}
 #quickslots .qs .qs-count{position:absolute;bottom:0;right:2px;font-size:9px;color:var(--gold)}
 .elite-label{position:absolute;font-size:8px;font-weight:bold;letter-spacing:1px;text-align:center;text-shadow:0 0 4px currentColor}
+#meta-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:150;background:var(--panel-bg);border:2px solid rgba(201,168,90,.5);border-radius:10px;padding:24px 28px;color:var(--parch);display:none;min-width:460px;max-width:540px;max-height:85vh;overflow-y:auto;box-shadow:var(--panel-shadow),0 0 36px rgba(180,120,255,.1)}
+#meta-panel.open{display:block}
+#meta-panel h2{font-family:var(--serif);color:#c9a0ff;font-size:22px;margin-bottom:8px;text-align:center;text-shadow:0 0 12px rgba(180,120,255,.5)}
+#meta-panel .meta-essence{text-align:center;color:var(--gold);font-size:15px;margin-bottom:14px;padding:6px;background:rgba(180,120,255,.08);border:1px solid rgba(180,120,255,.25);border-radius:6px}
+#meta-panel .meta-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 10px;margin:6px 0;background:rgba(201,168,90,.05);border:1px solid rgba(201,168,90,.2);border-radius:7px}
+#meta-panel .meta-info{flex:1;min-width:0;font-size:13px;line-height:1.5}
+#meta-panel .meta-icon{font-size:16px}
+#meta-panel .meta-pips{color:#c9a0ff;letter-spacing:2px;font-size:12px}
+#meta-panel .meta-desc{color:var(--ink);font-size:11px}
+#meta-panel .meta-buy{background:linear-gradient(to bottom,#4a3a6a,#2a2040);color:#e7d8ff;border:1px solid #8a6dc9;border-radius:5px;padding:7px 14px;cursor:pointer;font-size:13px;min-width:78px;white-space:nowrap;transition:all .15s}
+#meta-panel .meta-buy:hover:not(:disabled){background:linear-gradient(to bottom,#5d4a85,#352a52);border-color:#b69cf0;transform:scale(1.04)}
+#meta-panel .meta-buy:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.3)}
+#meta-panel .meta-hint{color:var(--ink);font-size:11px;text-align:center;margin:12px 0 4px;font-style:italic}

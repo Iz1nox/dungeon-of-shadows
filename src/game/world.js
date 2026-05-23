@@ -28,6 +28,7 @@ Object.assign(Game, {
     if(cls==='warrior')this.player.attackCd=.5;
     if(cls==='rogue')this.player.attackCd=.25;
     if(cls==='mage')this.player.attackCd=.6;
+    Meta.applyToPlayer(this.player); // persistent meta upgrades
     this._quickslotCounts={hp:0,mp:0};
     this._quickslotsCacheKey='';
     this._quickslotsDirty=true;

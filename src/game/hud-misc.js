@@ -127,12 +127,19 @@ Object.assign(Game, {
     document.getElementById(statsId).innerHTML=statsHtml;
   },
 
+  _awardRunEssence(victory){
+    const earned=Math.max(1,(this.floor||1)*8+(this.totalKills||0)+Math.floor((this.totalGold||0)/15)+(victory?60:0));
+    Meta.award(earned);
+    return `<br>🔮 Esencja dusz: +${earned} (łącznie: ${Meta.essence()})`;
+  },
+
   // ---- GAME OVER ----
   gameOver(){
     this.running=false;
     this.sound.stopAmbient();
     this.sound.death();
-    this._showEndScreen('death-screen','death-stats',this._buildRunSummaryLine());
+    const ess=this._awardRunEssence(false);
+    this._showEndScreen('death-screen','death-stats',this._buildRunSummaryLine()+ess);
   },
   
   victory(){
@@ -143,7 +150,8 @@ Object.assign(Game, {
     Achievements.checkAll(this);
     this.running=false;
     this.sound.stopAmbient();
-    this._showEndScreen('win-screen','win-stats',`${this._buildRunSummaryLine()}<br>Pokonałeś wszystkie ${MAX_FLOOR} pięter lochu!`);
+    const ess=this._awardRunEssence(true);
+    this._showEndScreen('win-screen','win-stats',`${this._buildRunSummaryLine()}<br>Pokonałeś wszystkie ${MAX_FLOOR} pięter lochu!${ess}`);
   },
   
   // ---- SHOP UI ----
