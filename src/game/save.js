@@ -701,6 +701,8 @@ Object.assign(Game, {
     const loadedEnemies=Array.isArray(saveData.enemies)?saveData.enemies:[];
     this.enemies=loadedEnemies.map(e=>({
       ...e,
+      // re-link the affix object (stats stay as saved; apply() is NOT re-run)
+      eliteAffix:e.eliteAffixName?(EliteAffixes.pool.find(a=>a.name===e.eliteAffixName)||null):null,
       pathTimer:0,path:[],alertTimer:0,animTimer:0,hitFlash:0,
       attackTimer:0,abilityTimer:3,patrolTarget:null,
     }));
@@ -776,6 +778,28 @@ Object.assign(Game, {
       attackCd:e.attackCd,
       burnTimer:e.burnTimer,freezeTimer:e.freezeTimer,poisonTimer:e.poisonTimer,
       stunTimer:e.stunTimer,
+      // elite affix state (stats are already baked in — only behavior flags + label)
+      elite:e.elite||false,
+      eliteAffixName:e.eliteAffix?e.eliteAffix.name:null,
+      vampiric:e.vampiric||false,
+      explosive:e.explosive||false,
+      shielded:e.shielded||false,
+      shieldHp:e.shieldHp,
+      teleporter:e.teleporter||false,
+      poisonous:e.poisonous||false,
+      evasive:e.evasive||false,
+      evasion:e.evasion,
+      riftbound:e.riftbound||false,
+      obeliskbound:e.obeliskbound||false,
+      // per-type combat parameters that the AI reads at runtime
+      projectileColor:e.projectileColor,
+      projectileSpeed:e.projectileSpeed,
+      windupTime:e.windupTime,
+      chargeWindupTime:e.chargeWindupTime,chargeSpeed:e.chargeSpeed,
+      chargeDashTime:e.chargeDashTime,chargeCdMax:e.chargeCdMax,chargeBonus:e.chargeBonus,
+      fuseTime:e.fuseTime,blastRadius:e.blastRadius,
+      healAmount:e.healAmount,healCd:e.healCd,
+      summonCd:e.summonCd,
     };
   },
 

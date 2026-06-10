@@ -17,7 +17,13 @@ Object.assign(Game, {
   _resolveEnemyProjectileHit(proj){
     if(Util.dist(proj.x,proj.y,this.player.x+.5,this.player.y+.5)<.6&&this.player.iFrames<=0){
       this._enemyProjectileHitsTaken=(this._enemyProjectileHitsTaken||0)+1;
-      let dmg=Math.max(1,proj.damage-this.player.def);
+      let raw=proj.damage;
+      const armor=this.player.equipment&&this.player.equipment.armor;
+      if(proj.element==='fire'&&armor&&armor.effect==='fireResist'){
+        raw*=.5;
+        this.floatingText.add(this.player.x+.5,this.player.y-.6,'🔥½','#fa8',.4);
+      }
+      let dmg=Math.max(1,Math.floor(raw)-this.player.def);
       this.damagePlayer(dmg,'Trafiony pociskiem!','damage');
       proj.alive=false;
       this.particles.burst(proj.x,proj.y,8,'#f44',2,.3);

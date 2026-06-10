@@ -52,6 +52,12 @@ Object.assign(Game, {
       if(p.level>=3)talentChoices.push({label:'💰 Łowca Złota +30%',desc:'Więcej złota ze skrzyń i wrogów',action:()=>{p.talents.goldFind+=.3;}});
       if(p.level>=5)talentChoices.push({label:'🗡️ Zabójca +10 ATK +15% Kryt',desc:'Mistrz skrytobójstwa',action:()=>{p.atk+=10;p.critChance+=.15;}});
     }
+    if(p.class==='necromancer'){
+      talentChoices.push({label:'✨ Moc Zaklęć +10%',desc:'Zaklęcia i sługi zadają więcej obrażeń',action:()=>{p.talents.spellPower+=.1;}});
+      talentChoices.push({label:'🔮 Tarcza Many +10%',desc:'Mana absorbuje część obrażeń',action:()=>{p.talents.manaShield+=.1;}});
+      if(p.level>=3)talentChoices.push({label:'💀 Władca Śmierci +1 sługa',desc:'Wyższy limit wskrzeszonych sług',action:()=>{p.talents.maxMinions=(p.talents.maxMinions||0)+1;}});
+      if(p.level>=5)talentChoices.push({label:'🕯️ Arcylisz +30 MP +15% Moc',desc:'Potęga nekromancji',action:()=>{p.maxMp+=30;p.mp+=30;p.talents.spellPower+=.15;}});
+    }
     return talentChoices;
   },
 

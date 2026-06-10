@@ -3,9 +3,13 @@ Object.assign(Game, {
   _buildBuffBarHtml(player){
     let buffHtml='';
     for(const b of player.buffs){
-      const icon=b.type==='str'?'💪':b.type==='def'?'🛡️':b.type==='obelisk'?'🗿':'✨';
-      const cls=b.type==='str'?'buff-str':b.type==='def'?'buff-def':'buff-shield';
-      const title=b.type==='str'?`Siła +${b.value}`:b.type==='def'?`Obrona +${b.value}`:`Eliksir Monolitu +${b.atkValue||0} ATK / +${b.defValue||0} DEF`;
+      const icon=b.type==='str'?'💪':b.type==='def'?'🛡️':b.type==='obelisk'?'🗿':b.type==='poison'?'☠️':b.type==='mirage'?'🪞':'✨';
+      const cls=b.type==='str'?'buff-str':b.type==='def'?'buff-def':b.type==='poison'?'buff-rage':'buff-shield';
+      const title=b.type==='str'?`Siła +${b.value}`
+        :b.type==='def'?`Obrona +${b.value}`
+        :b.type==='poison'?`Zatrucie: -${Math.max(1,Math.floor(b.value||2))} HP/s`
+        :b.type==='mirage'?`Eliksir Mirażu +${Math.round((b.critValue||0)*100)}% KRYT / +${Math.round((b.dodgeValue||0)*100)}% UNIK`
+        :`Eliksir Monolitu +${b.atkValue||0} ATK / +${b.defValue||0} DEF`;
       buffHtml+=`<div class="buff-icon ${cls}" title="${title}">${icon}<span class="buff-timer">${Math.ceil(b.duration)}s</span></div>`;
     }
     if(player.rageTimer>0)buffHtml+=`<div class="buff-icon buff-rage" title="Szał">😡<span class="buff-timer">${Math.ceil(player.rageTimer)}s</span></div>`;

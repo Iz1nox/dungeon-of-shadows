@@ -97,8 +97,9 @@ class DungeonGenerator {
       }
     }
     
-    // stairs (in the endless Abyss there is always a way down)
-    if(this.floor<MAX_FLOOR||this.endless){
+    // stairs — always present: on the final floor they trigger victory,
+    // in the endless Abyss they lead ever deeper
+    {
       const lastRoom=this.rooms[this.rooms.length-1];
       this.map[lastRoom.cy][lastRoom.cx]=TILE.STAIRS_DOWN;
     }
@@ -215,7 +216,7 @@ class DungeonGenerator {
     }
     
     // safety: ensure stairs still exist
-    if(this.floor<MAX_FLOOR||this.endless){
+    {
       let hasStairs=false;
       for(let y=0;y<this.h&&!hasStairs;y++)for(let x=0;x<this.w&&!hasStairs;x++)if(this.map[y][x]===TILE.STAIRS_DOWN)hasStairs=true;
       if(!hasStairs){

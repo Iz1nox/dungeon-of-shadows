@@ -17,6 +17,14 @@ Object.assign(Game, {
     this._triggerObeliskEchoOnSpellCast(spell);
   },
 
+  // a cast that fizzled (no target / no direction / blocked) costs nothing
+  _refundSpellCast(spell){
+    const p=this.player;
+    p.mp=Math.min(p.maxMp,p.mp+(spell.mpCost||0));
+    spell.cdTimer=0;
+    this._spellsCast=Math.max(0,(this._spellsCast||0)-1);
+  },
+
   _canCastSpell(player,spell,index){
     if(spell.cdTimer>0){
       this._combatFeedback(`spell_cd_${index}`,`${spell.name} jeszcze na cooldownie (${spell.cdTimer.toFixed(1)}s)`);
@@ -134,6 +142,7 @@ Object.assign(Game, {
 
   _castChainSpellNoTarget(spell){
     const p=this.player;
+    this._refundSpellCast(spell);
     this.particles.lightning(p.x+.5,p.y+.5,this.mouseWorldX,this.mouseWorldY);
     this.screenFX.flash('#9fd8ff',.08);
     this.log(`⚡ ${spell.name}: brak celu w zasięgu`,'info');
@@ -210,6 +219,7 @@ Object.assign(Game, {
     const mx=this.mouseWorldX,my=this.mouseWorldY;
     const dirLen=Util.dist(ox,oy,mx,my);
     if(dirLen<.01){
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_target_${index}`,`${spell.name}: wskaż kierunek.`);
       return;
     }
@@ -257,6 +267,7 @@ Object.assign(Game, {
     const mx=this.mouseWorldX,my=this.mouseWorldY;
     const dirLen=Util.dist(ox,oy,mx,my);
     if(dirLen<.01){
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_target_${index}`,`${spell.name}: wskaż kierunek.`);
       return;
     }
@@ -336,6 +347,7 @@ Object.assign(Game, {
     const maxTargets=Math.max(1,Math.floor(spell.targets||4));
     const targets=this._getChainSpellTargets(range).slice(0,maxTargets);
     if(targets.length===0){
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_target_${index}`,`${spell.name}: brak celu w zasięgu.`);
       return;
     }
@@ -366,6 +378,7 @@ Object.assign(Game, {
     const p=this.player;
     const dist=Util.dist(p.x,p.y,this.mouseWorldX,this.mouseWorldY);
     if(dist>spell.range){
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_range_${index}`,`${spell.name}: cel poza zasięgiem.`);
       return;
     }
@@ -383,6 +396,7 @@ Object.assign(Game, {
       Achievements.checkAll(this);
       this.log(`${spell.icon} Teleportacja!`,'spell');
     }else{
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_block_${index}`,`${spell.name}: nie można teleportować się w to miejsce.`);
     }
   },
@@ -426,6 +440,7 @@ Object.assign(Game, {
     const p=this.player;
     const dist=Util.dist(p.x,p.y,this.mouseWorldX,this.mouseWorldY);
     if(dist>spell.range){
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_range_${index}`,`${spell.name}: cel poza zasięgiem.`);
       return;
     }
@@ -463,6 +478,7 @@ Object.assign(Game, {
   },
 
   _castSpellDotNoTarget(spell){
+    this._refundSpellCast(spell);
     this.particles.burst(this.mouseWorldX,this.mouseWorldY,8,'#5fa',1.5,.25,2);
     this.log(`${spell.icon} Brak celu dla trucizny`,'info');
   },
@@ -504,6 +520,7 @@ Object.assign(Game, {
     const mx=this.mouseWorldX,my=this.mouseWorldY;
     const distToMouse=Util.dist(ox,oy,mx,my);
     if(distToMouse<.01){
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_target_${index}`,`${spell.name}: wskaż kierunek.`);
       return;
     }
@@ -562,6 +579,7 @@ Object.assign(Game, {
   },
 
   _castSpellDrainNoTarget(spell,index){
+    this._refundSpellCast(spell);
     this._combatFeedback(`spell_target_${index}`,`${spell.name}: brak celu w zasięgu.`);
   },
 
@@ -578,6 +596,7 @@ Object.assign(Game, {
     const p=this.player;
     const target=this._findNearestEnemyInRange(spell.range||6);
     if(!target){
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_target_${index}`,`${spell.name}: brak celu w zasięgu.`);
       return;
     }
@@ -586,6 +605,7 @@ Object.assign(Game, {
     const behindX=Math.floor(target.x+Math.cos(a)*1.2);
     const behindY=Math.floor(target.y+Math.sin(a)*1.2);
     if(!this.dungeon.isPassable(behindX,behindY)){
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_block_${index}`,`${spell.name}: brak miejsca za celem.`);
       return;
     }
@@ -636,6 +656,7 @@ Object.assign(Game, {
   },
 
   _castSpellBackstabNoTarget(spell,index){
+    this._refundSpellCast(spell);
     this._combatFeedback(`spell_target_${index}`,`${spell.name}: brak celu w zasięgu.`);
   },
 
@@ -654,6 +675,7 @@ Object.assign(Game, {
     const mx=this.mouseWorldX,my=this.mouseWorldY;
     const distToMouse=Util.dist(ox,oy,mx,my);
     if(distToMouse<.01){
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_target_${index}`,`${spell.name}: wskaż kierunek.`);
       return;
     }
@@ -716,11 +738,13 @@ Object.assign(Game, {
     const p=this.player;
     const target=this._findNearestEnemyInRange(spell.range||6);
     if(!target){
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_target_${index}`,`${spell.name}: brak celu w zasięgu.`);
       return;
     }
     const landing=this._findShadowstepLandingNearTarget(target);
     if(!landing){
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_block_${index}`,`${spell.name}: brak miejsca przy celu.`);
       return;
     }

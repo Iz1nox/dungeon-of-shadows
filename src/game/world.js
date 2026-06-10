@@ -24,7 +24,7 @@ Object.assign(Game, {
       iFrames:0,combo:0,comboTimer:0,
       moveAccX:0,moveAccY:0,
       animState:'idle',animTimer:0,facing:1,
-      talents:{lifeSteal:0,manaShield:0,dodge:0,thorns:0,critDmg:0,spellPower:0,goldFind:0,regenHp:0,regenMp:0},
+      talents:{lifeSteal:0,manaShield:0,dodge:0,thorns:0,critDmg:0,spellPower:0,goldFind:0,regenHp:0,regenMp:0,maxMinions:0},
     };
     if(cls==='warrior')this.player.attackCd=.5;
     if(cls==='rogue')this.player.attackCd=.25;
@@ -165,8 +165,9 @@ Object.assign(Game, {
       this.enemies.push(enemy);
     }
     
-    // boss every 3 floors
-    if(this.floor%3===0){
+    // boss every 3 floors + the final guardian on the last floor
+    const isBossFloor=this.floor%3===0||this.floor===MAX_FLOOR;
+    if(isBossFloor){
       const bossData=ContentRegistry.getBossForFloor(this.floor);
       if(bossData){
         const bossRoom=this.dungeon.rooms[this.dungeon.rooms.length-1];
@@ -202,13 +203,13 @@ Object.assign(Game, {
       }
     }
     
-    this.log(`📍 Piętro ${this.floor}`,this.floor%3===0?'boss':'info');
+    this.log(`📍 Piętro ${this.floor}`,isBossFloor?'boss':'info');
     this.floorTheme=FloorThemes.getTheme(this.floor);
     this.sound.startAmbient(this.floorTheme);
     this.log(`🏰 ${this.floorTheme.name}`,'info');
     const eventTrace=this._getFloorEventTraceSummary();
     if(eventTrace)this.log(eventTrace.longText,'info');
-    if(this.floor%3===0){
+    if(isBossFloor){
       this.log('⚠️ Wyczuwasz potężną obecność...','boss');
       this.sound.boss();
     }

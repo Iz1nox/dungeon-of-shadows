@@ -15,12 +15,28 @@ Object.assign(Game, {
     this._updatePlayerFov(p);
   },
 
+  _applyPlayerPoisonTick(buff,dt){
+    const p=this.player;
+    buff._tick=(buff._tick||0)+dt;
+    if(buff._tick<1)return;
+    buff._tick-=1;
+    const poisonDmg=Math.max(1,Math.floor(buff.value||2));
+    p.hp-=poisonDmg;
+    this.floatingText.add(p.x+.5,p.y,`-${poisonDmg}`,'#7dff7d');
+    this.particles.burst(p.x+.5,p.y+.5,4,'#8cff8c',1.2,.3,2);
+    if(p.hp<=0)this.gameOver();
+  },
+
   _tickAndExpirePlayerBuffs(dt){
     const p=this.player;
     let obeliskDuration=0;
     let mirageDuration=0;
     for(let i=p.buffs.length-1;i>=0;i--){
       p.buffs[i].duration-=dt;
+      if(p.buffs[i].type==='poison'&&p.buffs[i].duration>0){
+        this._applyPlayerPoisonTick(p.buffs[i],dt);
+        if(!this.running)return;
+      }
       if(p.buffs[i].duration<=0){
         if(p.buffs[i].type==='str')p.atk-=p.buffs[i].value;
         if(p.buffs[i].type==='def')p.def-=p.buffs[i].value;

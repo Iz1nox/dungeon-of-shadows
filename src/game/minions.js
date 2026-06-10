@@ -18,7 +18,7 @@ Object.assign(Game, {
   _castSpellSummon(spell){
     if(!Array.isArray(this.minions))this.minions=[];
     const p=this.player;
-    const max=spell.maxMinions||4;
+    const max=(spell.maxMinions||4)+((p.talents&&p.talents.maxMinions)||0);
     const duration=spell.duration||18;
     let spawned=0;
     for(let i=0;i<(spell.count||2);i++){
@@ -51,9 +51,7 @@ Object.assign(Game, {
       if(d<bestD){bestD=d;best=i;}
     }
     if(best===-1){
-      // no corpse in range: refund the cast instead of wasting it
-      p.mp=Math.min(p.maxMp,p.mp+spell.mpCost);
-      spell.cdTimer=0;
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_target_${index}`,`${spell.name}: brak szczątków w zasięgu.`);
       return;
     }
@@ -83,7 +81,7 @@ Object.assign(Game, {
     const p=this.player;
     const hpCost=Math.max(5,Math.floor(p.maxHp*(spell.hpCostPct||.15)));
     if(p.hp<=hpCost){
-      spell.cdTimer=0;
+      this._refundSpellCast(spell);
       this._combatFeedback(`spell_target_${index}`,`${spell.name}: za mało HP na pakt.`);
       return;
     }

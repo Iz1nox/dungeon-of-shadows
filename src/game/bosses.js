@@ -157,7 +157,6 @@ Object.assign(Game, {
   },
 
   _bossAbilityStomp(boss,dist){
-    for(const en of [...this.enemies]){/* don't hurt allies */}
     if(dist<4){
       this.damagePlayer(Math.floor(boss.atk*.8),`${boss.name} wykonuje potężne uderzenie!`,'damage');
       this.screenFX.shake(10,.5);

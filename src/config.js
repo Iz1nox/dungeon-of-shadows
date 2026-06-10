@@ -9,7 +9,7 @@ const MAP_H = 60;
 const MAX_FLOOR = 10;
 const FOV_RADIUS = 12;
 const SAVE_SLOTS = 3;
-const SAVE_SCHEMA_VERSION = 89;
+const SAVE_SCHEMA_VERSION = 90;
 const GAME_VERSION = '2.0.0';
 const SAVE_COMPAT_TAG = 'DOS-2.x';
 

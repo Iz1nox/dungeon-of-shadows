@@ -175,9 +175,31 @@ Object.assign(Game, {
     return html;
   },
 
+  _getEffectLabel(effect){
+    const labels={
+      freeze:'Mrozi cel przy trafieniu',
+      burn:'Podpala cel przy trafieniu',
+      lifesteal:'Leczy za 20% zadanych obrażeń',
+      execute:'Egzekucja celów poniżej 20% HP',
+      reap:'+50% obrażeń przeciw celom poniżej 30% HP',
+      obeliskStrike:'Uderzenie obszarowe Monolitu przy trafieniu (CD)',
+      riftSlash:'Rozcięcie Szczeliny rani pobliskich wrogów (CD)',
+      mirrorBlade:'Lustrzane cięcie trafia dodatkowego wroga (CD)',
+      manaShield:'Mana absorbuje część obrażeń',
+      fireResist:'Połowa obrażeń od ognia i lawy',
+      riftAegis:'Kontratak arcane po otrzymaniu obrażeń (CD)',
+      obeliskWard:'Warta: kontratak i +4 DEF po trafieniu (CD)',
+      mirrorVeil:'Zasłona: kontratak i nietykalność po trafieniu (CD)',
+      mirrorEcho:'Echo: lustrzane pociski przy zaklęciach (CD)',
+      riftPulse:'Puls arcane po otrzymaniu obrażeń (CD)',
+      obeliskEcho:'Echo Obelisku: salwa przy zaklęciach (CD)',
+    };
+    return labels[effect]||effect;
+  },
+
   _buildTooltipEffectStatsHtml(item){
     let html='';
-    if(item.effect)html+=`<div class="tt-stat">✨ Efekt: ${item.effect}</div>`;
+    if(item.effect)html+=`<div class="tt-stat">✨ ${this._getEffectLabel(item.effect)}</div>`;
     return html;
   },
 

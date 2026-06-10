@@ -28,6 +28,9 @@ Object.assign(Game, {
     const p=this.player;
     if(!(p.talents&&p.talents.thorns>0&&this._lastAttacker))return;
     const e=this._lastAttacker;
+    // thorns punish melee contact only — never a long-gone attacker
+    // (environmental damage like lava/traps used to proc them at any range)
+    if(Util.dist(p.x,p.y,e.x,e.y)>2.5)return;
     if(e.hp>0){
       e.hp-=p.talents.thorns;
       this.floatingText.add(e.x+.5,e.y,`-${p.talents.thorns}`,'#a4f');

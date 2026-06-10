@@ -6,22 +6,22 @@ const RELIC_DB = [
   // --- Generyczne (każda klasa) ---
   {id:'relic_iron_heart',   name:'Żelazne Serce',      icon:'❤️‍🔥', rarity:'epic',
    desc:'+40 Max HP, +1 HP/s regeneracji',
-   classes:['warrior','mage','rogue'],
+   classes:['warrior','mage','rogue','necromancer'],
    apply(p){p.maxHp+=40;p.hp=Math.min(p.maxHp,p.hp+40);p.talents.regenHp=(p.talents.regenHp||0)+1;}},
 
   {id:'relic_void_eye',     name:'Oko Pustki',          icon:'👁️', rarity:'epic',
    desc:'+12% Krytyk, +30% obrażenia krytyczne',
-   classes:['warrior','mage','rogue'],
+   classes:['warrior','mage','rogue','necromancer'],
    apply(p){p.critChance=Math.min(.9,(p.critChance||0)+.12);p.critMult=(p.critMult||1.5)+.3;p.talents.critDmg=(p.talents.critDmg||0)+.3;}},
 
   {id:'relic_gold_idol',    name:'Złoty Idol',          icon:'🏺', rarity:'rare',
    desc:'+40% złota ze skrzyń i wrogów',
-   classes:['warrior','mage','rogue'],
+   classes:['warrior','mage','rogue','necromancer'],
    apply(p){p.talents.goldFind=(p.talents.goldFind||0)+.4;}},
 
   {id:'relic_shadow_cloak', name:'Płaszcz Cienia',      icon:'🌑', rarity:'rare',
    desc:'+10% szansa na unik',
-   classes:['warrior','mage','rogue'],
+   classes:['warrior','mage','rogue','necromancer'],
    apply(p){p.talents.dodge=(p.talents.dodge||0)+.10;}},
 
   // --- Wojownik ---
@@ -45,6 +45,17 @@ const RELIC_DB = [
    desc:'+60 Max MP',
    classes:['mage'],
    apply(p){p.maxMp+=60;p.mp=Math.min(p.maxMp,p.mp+60);}},
+
+  // --- Nekromanta ---
+  {id:'relic_bone_crown',   name:'Korona z Kości',      icon:'👑', rarity:'legendary',
+   desc:'+1 limit sług, +15% moc zaklęć',
+   classes:['necromancer'],
+   apply(p){p.talents.maxMinions=(p.talents.maxMinions||0)+1;p.talents.spellPower=(p.talents.spellPower||0)+.15;}},
+
+  {id:'relic_grave_chalice',name:'Kielich Grobowy',     icon:'🏆', rarity:'epic',
+   desc:'+40 Max MP, +1.5 MP/s regeneracji',
+   classes:['necromancer'],
+   apply(p){p.maxMp+=40;p.mp=Math.min(p.maxMp,p.mp+40);p.talents.regenMp=(p.talents.regenMp||0)+1.5;}},
 
   // --- Łotrzyk ---
   {id:'relic_phantom_fang', name:'Kieł Fantomu',        icon:'🗡️', rarity:'legendary',

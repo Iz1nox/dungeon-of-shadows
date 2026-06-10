@@ -2,6 +2,7 @@
 Object.assign(Game, {
   _getFloorTransitionSubtitle(){
     if(this.endlessMode)return this.floor%3===0?'⚠️ Coś pradawnego budzi się w głębi...':'Otchłań nie ma dna...';
+    if(this.floor===MAX_FLOOR)return '⚠️ Strażnik lochu czeka...';
     return this.floor%3===0?'⚠️ Wyczuwasz potężną obecność...':'Schodzisz głębiej w mrok...';
   },
 

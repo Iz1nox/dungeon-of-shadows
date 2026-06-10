@@ -98,7 +98,6 @@ Object.assign(Game, {
     if(this.player.attackTimer>0)this.player.attackTimer-=dt;
     if(this.player.attackAnim>0)this.player.attackAnim-=dt;
     if((this._mirrorBladeCooldown||0)>0)this._mirrorBladeCooldown=Math.max(0,this._mirrorBladeCooldown-dt);
-    if((this._mirrorBladeCooldown||0)>0)this._mirrorBladeCooldown=Math.max(0,this._mirrorBladeCooldown-dt);
     if((this._mirrorVeilCooldown||0)>0)this._mirrorVeilCooldown=Math.max(0,this._mirrorVeilCooldown-dt);
     if((this._mirrorEchoCooldown||0)>0)this._mirrorEchoCooldown=Math.max(0,this._mirrorEchoCooldown-dt);
     if((this._riftPulseCooldown||0)>0)this._riftPulseCooldown=Math.max(0,this._riftPulseCooldown-dt);
@@ -203,7 +202,10 @@ Object.assign(Game, {
     if(tile===TILE.LAVA){
       if(!this._lavaTick||this.gameTime-this._lavaTick>.5){
         const hpBefore=p.hp;
-        this.damagePlayer(5+this.floor,'Obrażenia od lawy!','damage');
+        let lavaDmg=5+this.floor;
+        const armor=p.equipment&&p.equipment.armor;
+        if(armor&&armor.effect==='fireResist')lavaDmg=Math.max(1,Math.floor(lavaDmg*.5));
+        this.damagePlayer(lavaDmg,'Obrażenia od lawy!','damage');
         if(p.hp<hpBefore){
           this._hazardHitsTaken=(this._hazardHitsTaken||0)+1;
           Achievements.checkAll(this);

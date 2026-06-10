@@ -92,17 +92,27 @@ Object.assign(Game, {
   },
 
   _appendItemPotionStats(parts,item){
+    if(item.type!=='potion')return;
     if(item.subtype==='hp')parts.push(`Leczy ${item.value} HP`);
     if(item.subtype==='mp')parts.push(`Leczy ${item.value} MP`);
     if(item.subtype==='str')parts.push(`ATK+${item.value} ${item.duration}s`);
     if(item.subtype==='def')parts.push(`DEF+${item.value} ${item.duration}s`);
     if(item.subtype==='mirage')parts.push(`HP+${item.value}, MP+${item.mpValue||0}, KRYT+${Math.round((item.critValue||0)*100)}%, UNIK+${Math.round((item.dodgeValue||0)*100)}% ${item.duration}s`);
   },
-  
+
+  _appendItemScrollStats(parts,item){
+    if(item.type!=='scroll')return;
+    if(item.subtype==='firestorm')parts.push(`Ogień ${item.damage} DMG, promień ${item.radius}`);
+    if(item.subtype==='teleport')parts.push('Losowy teleport');
+    if(item.subtype==='frost')parts.push(`Zamraża widocznych wrogów ${item.duration}s`);
+    if(item.subtype==='ward')parts.push(`DEF+${item.value} ${item.duration}s`);
+  },
+
   _getItemStatsStr(item){
     const parts=[];
     this._appendItemBaseStats(parts,item);
     this._appendItemPotionStats(parts,item);
+    this._appendItemScrollStats(parts,item);
     return parts.join(', ');
   },
 
