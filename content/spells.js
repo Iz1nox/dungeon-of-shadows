@@ -21,5 +21,12 @@ const SpellDB = {
     {name:'Odłamki Monolitu',icon:'🔷',key:'3',mpCost:20,cd:10,cdTimer:0,desc:'Wachlarz odłamków arcane przed łotrzykiem',type:'obelisk_fan',damage:18,count:5,range:7,spread:.55,width:.75},
     {name:'Przebicie Pustki',icon:'🕳️',key:'4',mpCost:18,cd:11,cdTimer:0,desc:'Doskok przez cel i egzekucja osłabionych',type:'voidstep',damage:24,range:6.5,executeHpPct:.35,executeBonus:20},
     {name:'Taniec Ostrzy',icon:'🩸',key:'5',mpCost:24,cd:14,cdTimer:0,desc:'Skok do celu i seria cięć',type:'shadowstep',damage:22,range:7,strikes:3,healPct:.2},
+  ],
+  necromancer:[
+    {name:'Pocisk Pustki',icon:'🜏',key:'1',mpCost:9,cd:2.5,cdTimer:0,desc:'Mroczny pocisk raniący wroga',type:'projectile',damage:22,element:'shadow'},
+    {name:'Wskrzeszenie',icon:'💀',key:'2',mpCost:24,cd:9,cdTimer:0,desc:'Przyzywa 2 szkieletowe sługi na 18s (max 4)',type:'summon',count:2,duration:18,maxMinions:4},
+    {name:'Żniwa Dusz',icon:'🌑',key:'3',mpCost:16,cd:7,cdTimer:0,desc:'Wysysa życie z najbliższego wroga',type:'drain',damage:24},
+    {name:'Eksplozja Zwłok',icon:'🩸',key:'4',mpCost:20,cd:9,cdTimer:0,desc:'Detonuje pobliskie szczątki poległych, raniąc wrogów w okolicy',type:'corpse_burst',damage:30,range:7,radius:2.6},
+    {name:'Mroczny Pakt',icon:'🕯️',key:'5',mpCost:0,cd:14,cdTimer:0,desc:'Poświęć 15% maks. HP: odzyskaj 45 MP i wzmocnij sługi',type:'dark_pact',hpCostPct:.15,manaGain:45,minionAtkBonus:5,minionHeal:20},
   ]
 };

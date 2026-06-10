@@ -8,7 +8,7 @@ Object.assign(Game, {
   },
 
   _isStackableItem(item){
-    return !!item&&item.type==='potion';
+    return !!item&&(item.type==='potion'||item.type==='scroll');
   },
 
   _getStackKey(item){
@@ -102,6 +102,10 @@ Object.assign(Game, {
       return{label:'Wypij',canUse:true,reason:''};
     }
 
+    if(item.type==='scroll'){
+      return{label:'Odczytaj',canUse:true,reason:''};
+    }
+
     if(item.type==='weapon'||item.type==='armor'||item.type==='ring'){
       return{label:'Załóż',canUse:true,reason:''};
     }
@@ -164,6 +168,7 @@ Object.assign(Game, {
     }
 
     if(item.type==='potion')this._usePotionItem(idx,item);
+    else if(item.type==='scroll')this._useScrollItem(idx,item);
     else if(item.type==='weapon')this._equipWeaponItem(idx,item);
     else if(item.type==='armor')this._equipArmorItem(idx,item);
     else if(item.type==='ring')this._equipRingItem(idx,item);
@@ -261,6 +266,55 @@ Object.assign(Game, {
     }
     Achievements.checkAll(this);
     this.sound.pickup();
+  },
+
+  _useScrollItem(idx,item){
+    const p=this.player;
+    this._consumeInventoryAt(idx,1);
+    this._scrollsUsed=(this._scrollsUsed||0)+1;
+    if(item.subtype==='firestorm'){
+      const radius=item.radius||4;
+      const dmg=Math.max(1,Math.floor((item.damage||40)+this.floor*2));
+      let hits=0;
+      for(const e of this.enemies){
+        if(e.hp<=0)continue;
+        if(Util.dist(p.x,p.y,e.x,e.y)>radius)continue;
+        this.damageEnemy(e,dmg,'fire');
+        hits++;
+      }
+      this.particles.burst(p.x+.5,p.y+.5,32,'#f80',radius*1.2,.6,3.4);
+      this.screenFX.flash('#ffa040',.12);
+      this.screenFX.shake(7,.3);
+      this.log(`📜 Ognista Burza! Trafiono: ${hits}`,'spell');
+    }else if(item.subtype==='teleport'){
+      const room=Util.pick(this.dungeon.rooms);
+      this.particles.magic(p.x+.5,p.y+.5,'#8af');
+      p.x=room.cx;p.y=room.cy;
+      this.particles.magic(p.x+.5,p.y+.5,'#8af');
+      FOV.compute(this.dungeon,Math.floor(p.x+.5),Math.floor(p.y+.5),FOV_RADIUS);
+      this._minimapDirty=true;
+      this.screenFX.flash('#9fc8ff',.1);
+      this.log('📜 Zwój przenosi cię w nieznane miejsce!','spell');
+    }else if(item.subtype==='frost'){
+      let frozen=0;
+      for(const e of this.enemies){
+        if(e.hp<=0)continue;
+        const ex=Math.floor(e.x),ey=Math.floor(e.y);
+        if(!this.dungeon.visible[ey]?.[ex])continue;
+        e.freezeTimer=Math.max(e.freezeTimer||0,item.duration||3.5);
+        this.particles.burst(e.x+.5,e.y+.5,6,'#d8f0ff',1.6,.3,2.4);
+        frozen++;
+      }
+      this.screenFX.flash('#bfe6ff',.12);
+      this.log(`📜 Zwój Mrozu! Zamrożono: ${frozen}`,'spell');
+    }else if(item.subtype==='ward'){
+      p.def+=item.value;
+      p.buffs.push({type:'def',value:item.value,duration:item.duration||20});
+      this.particles.magic(p.x+.5,p.y+.5,'#9fc8ff');
+      this.log(`📜 Zwój Ochrony: +${item.value} DEF na ${item.duration||20}s`,'spell');
+    }
+    Achievements.checkAll(this);
+    this.sound.spell();
   },
 
   _swapEquipmentFromInventory(idx,slot,item){

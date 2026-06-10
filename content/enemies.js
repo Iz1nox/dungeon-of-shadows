@@ -8,8 +8,11 @@ const EnemyDB = {
     {name:'Goblin',icon:'👺',hp:25,atk:8,def:1,xp:12,gold:8,speed:1,ai:'chase',color:'#6a6'},
     {name:'Dzik Otchłani',icon:'🐗',hp:46,atk:11,def:2,xp:24,gold:9,speed:.9,ai:'charger',color:'#b6764a',attackCd:1.1,chargeWindupTime:.6,chargeSpeed:10,chargeDashTime:.4,chargeCdMax:3.5,chargeBonus:7},
     {name:'Zombie',icon:'🧟',hp:50,atk:10,def:3,xp:20,gold:6,speed:.5,ai:'chase',color:'#686'},
+    {name:'Zarodnik Otchłani',icon:'🦠',hp:22,atk:14,def:0,xp:18,gold:6,speed:1.6,ai:'bomber',color:'#9c6',fuseTime:.9,blastRadius:2.2},
     {name:'Ork',icon:'👹',hp:60,atk:12,def:5,xp:25,gold:12,speed:.7,ai:'patrol',color:'#8a6'},
+    {name:'Kapłan Zgnilizny',icon:'📿',hp:55,atk:9,def:3,xp:38,gold:20,speed:.85,ai:'healer',color:'#9d9',healAmount:25,healCd:4.5},
     {name:'Mag Cieni',icon:'🧙',hp:35,atk:15,def:2,xp:30,gold:15,speed:.6,ai:'ranged',color:'#a6a',ranged:true,attackCd:1.35,projectileColor:'#d7a8ff',projectileSpeed:6.2},
+    {name:'Przyzywacz Kości',icon:'🦴',hp:40,atk:10,def:2,xp:36,gold:18,speed:.7,ai:'summoner',color:'#dcb',summonCd:8},
     {name:'Kultysta Otchłani',icon:'🔮',hp:48,atk:15,def:2,xp:34,gold:16,speed:.8,ai:'ranged',color:'#6cf',ranged:true,attackCd:1.6,projectileColor:'#7fd8ff',projectileSpeed:5.2},
     {name:'Widmowy Łowca',icon:'👻',hp:62,atk:16,def:3,xp:42,gold:18,speed:1.15,ai:'ranged',color:'#9ef',ranged:true,attackCd:1.2,projectileColor:'#bde6ff',projectileSpeed:6.4},
     {name:'Ogr',icon:'👾',hp:100,atk:18,def:8,xp:40,gold:20,speed:.4,ai:'chase',color:'#aa8'},
@@ -26,6 +29,15 @@ const EnemyDB = {
     {name:'Siewca Szczeliny',icon:'🌀',hp:170,atk:33,def:13,xp:90,gold:45,speed:1.04,ai:'ranged',color:'#c8b5ff',ranged:true,attackCd:1.02,projectileColor:'#dbc7ff',projectileSpeed:7.1},
     {name:'Wieszcz Obelisku',icon:'🔷',hp:174,atk:34,def:14,xp:92,gold:46,speed:.9,ai:'ranged',color:'#d9e3ff',ranged:true,attackCd:1.1,projectileColor:'#c7d6ff',projectileSpeed:6.9},
   ],
+  // potwory spotykane wyłącznie w nieskończonej Otchłani (piętra 11+)
+  abyssTypes:[
+    {name:'Pomiot Otchłani',icon:'🕷️',hp:190,atk:36,def:14,xp:100,gold:50,speed:1.25,ai:'chase',color:'#7a5aff'},
+    {name:'Oko Otchłani',icon:'👁️',hp:175,atk:38,def:12,xp:105,gold:52,speed:.85,ai:'ranged',color:'#a06aff',ranged:true,attackCd:1.0,projectileColor:'#c9a6ff',projectileSpeed:7.4},
+    {name:'Czerw Pustki',icon:'🪱',hp:150,atk:46,def:10,xp:95,gold:48,speed:1.5,ai:'bomber',color:'#b08aff',fuseTime:.8,blastRadius:2.4},
+    {name:'Pożeracz Dusz',icon:'👿',hp:210,atk:40,def:15,xp:115,gold:56,speed:1.1,ai:'chase',color:'#ff5a8a'},
+    {name:'Wybrzmienie Otchłani',icon:'🫧',hp:200,atk:36,def:14,xp:110,gold:54,speed:.9,ai:'healer',color:'#8ad8ff',healAmount:35,healCd:4},
+    {name:'Herold Końca',icon:'🌑',hp:230,atk:42,def:16,xp:125,gold:60,speed:.95,ai:'summoner',color:'#5a3aaf',summonCd:7},
+  ],
   bosses:[
     {name:'Król Goblinów',icon:'👑',hp:200,atk:20,def:8,xp:100,gold:100,speed:.6,ai:'boss',color:'#0f0',
       abilities:['charge','summon'],floor:3},
@@ -33,9 +45,20 @@ const EnemyDB = {
       abilities:['fireball','teleport','mirror_dash','rift_nova','obelisk_storm','summon'],floor:6},
     {name:'Smok Cieni',icon:'🐉',hp:600,atk:45,def:15,xp:500,gold:500,speed:.8,ai:'boss',color:'#f80',
       abilities:['breath','charge','mirror_dash','rift_nova','obelisk_storm','stomp'],floor:10},
+    {name:'Awatar Otchłani',icon:'🕳️',hp:480,atk:36,def:18,xp:800,gold:700,speed:.85,ai:'boss',color:'#7a5aff',
+      abilities:['summon','rift_nova','mirror_dash','teleport','breath'],floor:12},
+    {name:'Pożeracz Światła',icon:'🌑',hp:620,atk:42,def:22,xp:1200,gold:1000,speed:.9,ai:'boss',color:'#9a7aff',
+      abilities:['breath','charge','rift_nova','obelisk_storm','mirror_dash','summon','stomp'],floor:15},
   ],
-  
+
   getForFloor(floor){
+    if(floor>MAX_FLOOR){
+      // Otchłań: im głębiej, tym mniej słabych typów i więcej potworów Otchłani
+      const depth=floor-MAX_FLOOR;
+      const cut=Math.min(this.types.length-4,8+depth);
+      const abyssCount=Math.min(this.abyssTypes.length,1+Math.ceil(depth/2));
+      return this.types.slice(cut).concat(this.abyssTypes.slice(0,abyssCount));
+    }
     const progression=Math.max(0,floor-1);
     const spread=Math.max(1,this.types.length-3);
     const maxTier=Math.min(this.types.length,3+Math.floor(progression*spread/9));

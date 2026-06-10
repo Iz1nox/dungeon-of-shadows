@@ -3,8 +3,8 @@
 // PROCEDURAL DUNGEON GENERATOR (BSP)
 // =============================================
 class DungeonGenerator {
-  constructor(w,h,floor){
-    this.w=w;this.h=h;this.floor=floor;
+  constructor(w,h,floor,endless=false){
+    this.w=w;this.h=h;this.floor=floor;this.endless=!!endless;
     this.map=Array.from({length:h},()=>new Uint8Array(w));
     this.rooms=[];this.explored=Array.from({length:h},()=>new Uint8Array(w));
     this.visible=Array.from({length:h},()=>new Uint8Array(w));
@@ -97,8 +97,8 @@ class DungeonGenerator {
       }
     }
     
-    // stairs
-    if(this.floor<MAX_FLOOR){
+    // stairs (in the endless Abyss there is always a way down)
+    if(this.floor<MAX_FLOOR||this.endless){
       const lastRoom=this.rooms[this.rooms.length-1];
       this.map[lastRoom.cy][lastRoom.cx]=TILE.STAIRS_DOWN;
     }
@@ -215,7 +215,7 @@ class DungeonGenerator {
     }
     
     // safety: ensure stairs still exist
-    if(this.floor<MAX_FLOOR){
+    if(this.floor<MAX_FLOOR||this.endless){
       let hasStairs=false;
       for(let y=0;y<this.h&&!hasStairs;y++)for(let x=0;x<this.w&&!hasStairs;x++)if(this.map[y][x]===TILE.STAIRS_DOWN)hasStairs=true;
       if(!hasStairs){

@@ -193,7 +193,7 @@ Object.assign(Game, {
   },
 
   _handleStairsDownInteraction(){
-    if(this.floor>=MAX_FLOOR){
+    if(this.floor>=MAX_FLOOR&&!this.endlessMode){
       this.victory();
       return;
     }

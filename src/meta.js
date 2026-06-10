@@ -11,6 +11,10 @@ const Meta = {
     {id:'ward',name:'Ochrona',icon:'🛡️',desc:'+1 DEF / poziom',max:5,cost:l=>50+l*35,apply:(p,l)=>{p.def+=l;}},
     {id:'focus',name:'Skupienie',icon:'🔮',desc:'+10 maks. MP / poziom',max:5,cost:l=>35+l*25,apply:(p,l)=>{p.maxMp+=10*l;p.mp+=10*l;}},
     {id:'fortune',name:'Fortuna',icon:'💰',desc:'+25 startowego złota / poziom',max:5,cost:l=>30+l*25,apply:(p,l)=>{p.gold+=25*l;}},
+    {id:'swiftness',name:'Prędkość',icon:'💨',desc:'+0.2 szybkości / poziom',max:3,cost:l=>60+l*45,apply:(p,l)=>{p.speed+=.2*l;}},
+    {id:'precision',name:'Precyzja',icon:'🎯',desc:'+2% szansy na krytyka / poziom',max:5,cost:l=>55+l*40,apply:(p,l)=>{p.critChance+=.02*l;}},
+    {id:'alchemy',name:'Alchemik',icon:'🧪',desc:'Zaczynasz z miksturą HP / poziom',max:3,cost:l=>45+l*30,apply:(p,l)=>{p.inventory.push({...ItemDB.potions[0],id:Math.random().toString(36).substr(2,9),count:l});}},
+    {id:'harvest',name:'Żniwa Dusz',icon:'🔮',desc:'+10% esencji dusz po wyprawie / poziom',max:5,cost:l=>70+l*50,apply:()=>{}},
   ],
   load(){
     if(!this.data){

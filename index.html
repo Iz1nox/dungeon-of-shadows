@@ -10,6 +10,7 @@
 <div id="title-screen">
 <h1>DUNGEON OF SHADOWS</h1>
 <div class="subtitle">Zaawansowany Roguelike — Proceduralnie Generowane Lochy</div>
+<div style="color:#a87cd8;font-size:13px;margin-bottom:14px">✦ Aktualizacja 2.0 „Echa Otchłani": Nekromanta, nieskończona Otchłań, zwoje, nowi wrogowie ✦</div>
 <div style="color:#777;font-size:13px;margin-bottom:30px;line-height:1.8">
 WASD / Strzałki — Ruch | Myszka — Celowanie | LPM — Atak | PPM / Shift+LPM — Atak specjalny<br>
 1-5 — Zaklęcia | I — Ekwipunek | E — Podnoszenie | Spacja — Czekaj | F — Interakcja / Sklep | Tab — Mapa<br>
@@ -18,6 +19,7 @@ Esc — Ustawienia / Zapisz / Wczytaj | <span id="title-debug-key">F3</span> —
 <button onclick="Game.start('warrior')">⚔️ Wojownik</button>
 <button onclick="Game.start('mage')">🔮 Mag</button>
 <button onclick="Game.start('rogue')">🗡️ Łotrzyk</button>
+<button onclick="Game.start('necromancer')">💀 Nekromanta</button>
 <div style="margin-top:20px">
 <button onclick="Game.loadFromTitle()" style="padding:10px 30px;font-size:15px">📂 Wczytaj zapis</button>
 <button onclick="Game.openMeta()" style="padding:10px 30px;font-size:15px">🔮 Sanktuarium Dusz</button>
@@ -33,7 +35,9 @@ Esc — Ustawienia / Zapisz / Wczytaj | <span id="title-debug-key">F3</span> —
 <div id="win-screen">
 <h1>🏆 ZWYCIĘSTWO!</h1>
 <div id="win-stats" style="font-size:16px;color:#aaa;margin:10px 0"></div>
+<button onclick="Game.enterAbyss()">🕳️ Zejdź do Otchłani</button>
 <button onclick="location.reload()">Zagraj ponownie</button>
+<div style="color:#777;font-size:12px;margin-top:12px;max-width:520px">Otchłań to nieskończone piętra o rosnącej trudności — schodzisz tak głęboko, jak pozwolą ci siły. Esencję dusz zachowasz niezależnie od wyniku.</div>
 </div>
 
 <div id="level-up-screen">
@@ -113,6 +117,7 @@ Esc — Ustawienia / Zapisz / Wczytaj | <span id="title-debug-key">F3</span> —
 <script src="src/game/combat.js"></script>
 <script src="src/game/defense.js"></script>
 <script src="src/game/spells.js"></script>
+<script src="src/game/minions.js"></script>
 <script src="src/game/inventory.js"></script>
 <script src="src/game/events.js"></script>
 <script src="src/game/progression.js"></script>

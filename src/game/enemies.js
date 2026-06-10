@@ -121,7 +121,7 @@ Object.assign(Game, {
   },
 
   _tryFleeEnemy(e,p,dist,dt){
-    if(!(e.hp<e.maxHp*0.2&&e.ai!=='boss'))return false;
+    if(!(e.hp<e.maxHp*0.2&&e.ai!=='boss'&&e.ai!=='bomber'))return false;
     const fleeAngle=Util.angle(p.x,p.y,e.x,e.y);
     const fx=e.x+Math.cos(fleeAngle)*e.speed*dt*1.3;
     const fy=e.y+Math.sin(fleeAngle)*e.speed*dt*1.3;
@@ -164,6 +164,113 @@ Object.assign(Game, {
       }
     }
     return true; // committed this frame: skip movement/other AI
+  },
+
+  _fleeFromPlayer(e,dt,mult=1){
+    const p=this.player;
+    const fleeAngle=Util.angle(p.x,p.y,e.x,e.y);
+    const fx=e.x+Math.cos(fleeAngle)*e.speed*dt*mult;
+    const fy=e.y+Math.sin(fleeAngle)*e.speed*dt*mult;
+    if(this.dungeon.isPassable(Math.floor(fx),Math.floor(e.y)))e.x=fx;
+    if(this.dungeon.isPassable(Math.floor(e.x),Math.floor(fy)))e.y=fy;
+  },
+
+  _bomberExplode(e){
+    const p=this.player;
+    const r=e.blastRadius||2.2;
+    const cx=e.x+.5,cy=e.y+.5;
+    if(Util.dist(p.x,p.y,e.x,e.y)<r){
+      const dmg=Math.max(1,Math.floor(e.atk*1.4-p.def*.5));
+      this._lastAttacker=e;
+      this.damagePlayer(dmg,`💥 ${e.icon} ${e.name} eksploduje za ${dmg}!`,'damage');
+    }
+    // the blast also tears apart nearby monsters — chain reactions welcome
+    for(const other of this.enemies){
+      if(other===e||other.hp<=0)continue;
+      if(Util.dist(other.x,other.y,e.x,e.y)>=r)continue;
+      const splash=Math.max(1,Math.floor(e.atk*.8)-Math.floor((other.def||0)*.5));
+      other.hp-=splash;
+      other.hitFlash=.2;other.alerted=true;
+      this.floatingText.add(other.x+.5,other.y,`-${splash}`,'#fa6');
+    }
+    e.hp=0;
+    e._detonated=true;
+    this.particles.burst(cx,cy,30,'#f80',r*1.4,.5,3.4);
+    this.particles.burst(cx,cy,16,'#ff4',r,.4,3);
+    this.screenFX.shake(7,.3);
+    this.sound.hit();
+  },
+
+  _updateBomber(e,dt,dist){
+    if(e.fuse>0){
+      e.fuse-=dt;
+      if(Util.chance(.35))this.particles.burst(e.x+.5,e.y+.5,1,'#fa4',1,.2,2.2);
+      if(e.fuse<=0)this._bomberExplode(e);
+      return;
+    }
+    if(dist<1.6){
+      e.fuse=e.fuseTime||.9;
+      this.floatingText.add(e.x+.5,e.y-.5,'!','#f60',.5);
+      return;
+    }
+    this._chaseEnemyTowardPlayer(e,dt);
+  },
+
+  _updateSummoner(e,dt,dist){
+    e.summonTimer=(Number.isFinite(e.summonTimer)?e.summonTimer:2)-dt;
+    if(e.summonTimer<=0&&dist<10&&this.enemies.length<45){
+      e.summonTimer=e.summonCd||8;
+      const pool=ContentRegistry.getEnemyTypesForFloor(this.floor)
+        .filter(t=>t.ai!=='summoner'&&t.ai!=='healer'&&t.ai!=='bomber');
+      const weakest=pool.slice(0,Math.max(1,Math.min(3,pool.length)));
+      let raised=0;
+      for(let i=0;i<2&&weakest.length;i++){
+        const et=Util.pick(weakest);
+        const sx=e.x+Util.rand(-2,2),sy=e.y+Util.rand(-2,2);
+        if(!this.dungeon.isPassable(Math.floor(sx),Math.floor(sy)))continue;
+        const minion=this._makeEnemy(et,sx,sy);
+        minion.maxHp=Math.max(1,Math.floor(minion.maxHp*.75));
+        minion.hp=minion.maxHp;
+        minion.xp=Math.max(1,Math.floor(minion.xp*.5));
+        minion.gold=Math.max(1,Math.floor(minion.gold*.5));
+        minion.alerted=true;
+        this.enemies.push(minion);
+        this.particles.magic(sx+.5,sy+.5,e.color||'#dcb');
+        raised++;
+      }
+      if(raised>0){
+        this.particles.magic(e.x+.5,e.y+.5,e.color||'#dcb');
+        this._combatFeedback('summoner_raise',`${e.icon} ${e.name} przyzywa posiłki!`,'boss',2);
+      }
+    }
+    if(dist<1.2&&e.attackTimer<=0){this._startEnemyWindup(e);return;}
+    if(dist<3.5){this._fleeFromPlayer(e,dt);return;}
+    if(dist>7)this._chaseEnemyTowardPlayer(e,dt);
+  },
+
+  _updateHealer(e,dt,dist){
+    e.healTimer=(Number.isFinite(e.healTimer)?e.healTimer:2)-dt;
+    if(e.healTimer<=0){
+      let target=null,bestPct=.99;
+      for(const ally of this.enemies){
+        if(ally===e||ally.hp<=0)continue;
+        if(Util.dist(e.x,e.y,ally.x,ally.y)>6)continue;
+        const pct=ally.hp/ally.maxHp;
+        if(pct<bestPct){bestPct=pct;target=ally;}
+      }
+      if(target){
+        e.healTimer=e.healCd||4.5;
+        const heal=Math.floor((e.healAmount||25)*(1+this.floor*.05));
+        target.hp=Math.min(target.maxHp,target.hp+heal);
+        this.particles.lightning(e.x+.5,e.y+.5,target.x+.5,target.y+.5);
+        this.particles.heal(target.x+.5,target.y+.5);
+        this.floatingText.add(target.x+.5,target.y,`+${heal}`,'#7f7');
+        this._combatFeedback('healer_heal',`${e.icon} ${e.name} leczy ${target.name}!`,'info',2);
+      }
+    }
+    if(dist<1.2&&e.attackTimer<=0){this._startEnemyWindup(e);return;}
+    if(dist<3){this._fleeFromPlayer(e,dt);return;}
+    if(dist>8)this._chaseEnemyTowardPlayer(e,dt);
   },
 
   _runEnemyCombatBehavior(e,dist,dt){
@@ -368,6 +475,9 @@ Object.assign(Game, {
 
       this._updateEnemyPackAlert(e,dt);
       if(e.ai==='charger'){this._updateCharger(e,dt,dist);continue;}
+      if(e.ai==='bomber'){this._updateBomber(e,dt,dist);continue;}
+      if(e.ai==='summoner'){this._updateSummoner(e,dt,dist);continue;}
+      if(e.ai==='healer'){this._updateHealer(e,dt,dist);continue;}
       this._runEnemyCombatBehavior(e,dist,dt);
     }
 

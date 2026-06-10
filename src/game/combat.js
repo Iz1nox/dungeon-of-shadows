@@ -54,10 +54,14 @@ Object.assign(Game, {
     // break stealth
     if(p.stealthTimer>0)p.stealthTimer=0;
     
-    const range=p.class==='mage'?6:1.8;
-    
+    const range=(p.class==='mage'||p.class==='necromancer')?6:1.8;
+
     if(p.class==='mage'){
       this._performMageAutoAttack();
+      return;
+    }
+    if(p.class==='necromancer'){
+      this._performNecroAutoAttack();
       return;
     }
 
@@ -71,6 +75,14 @@ Object.assign(Game, {
     this.projectiles.push(new Projectile(p.x+.5,p.y+.5,this.mouseWorldX,this.mouseWorldY,8,p.atk+5,'#88f',true));
     this.particles.magic(p.x+.5,p.y+.5,'#88f');
     this.screenFX.flash('#88aaff',.05);
+    this.sound.spell();
+  },
+
+  _performNecroAutoAttack(){
+    const p=this.player;
+    this.projectiles.push(new Projectile(p.x+.5,p.y+.5,this.mouseWorldX,this.mouseWorldY,7.5,p.atk+4,'#a875ff',true,'shadow'));
+    this.particles.magic(p.x+.5,p.y+.5,'#a875ff');
+    this.screenFX.flash('#b9a0ff',.04);
     this.sound.spell();
   },
 
@@ -94,6 +106,7 @@ Object.assign(Game, {
           if(weapon.effect==='burn')e.burnTimer=3;
           if(weapon.effect==='lifesteal'){const heal=Math.floor(dmg*.2);p.hp=Math.min(p.maxHp,p.hp+heal);}
           if(weapon.effect==='execute'&&e.hp<e.maxHp*.2)dmg=e.hp;
+          if(weapon.effect==='reap'&&e.hp<e.maxHp*.3)dmg=Math.floor(dmg*1.5);
         }
 
         dmg=Math.max(1,dmg-e.def);
@@ -164,7 +177,8 @@ Object.assign(Game, {
     const handlers={
       warrior:()=>this._specialAttackWarrior(),
       mage:()=>this._specialAttackMage(),
-      rogue:()=>this._specialAttackRogue()
+      rogue:()=>this._specialAttackRogue(),
+      necromancer:()=>this._specialAttackNecromancer()
     };
     return handlers[playerClass]||null;
   },
@@ -227,7 +241,7 @@ Object.assign(Game, {
   },
 
   _getElementHitColor(element){
-    return element==='fire'?'#f80':element==='ice'?'#8af':element==='poison'?'#7dff7d':element==='arcane'?'#f0f':'#f44';
+    return element==='fire'?'#f80':element==='ice'?'#8af':element==='poison'?'#7dff7d':element==='arcane'?'#f0f':element==='shadow'?'#b48cff':'#f44';
   },
 
   _applyEnemyElementHitEffects(e,element){

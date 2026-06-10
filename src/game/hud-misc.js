@@ -128,7 +128,9 @@ Object.assign(Game, {
   },
 
   _awardRunEssence(victory){
-    const earned=Math.max(1,(this.floor||1)*8+(this.totalKills||0)+Math.floor((this.totalGold||0)/15)+(victory?60:0));
+    let earned=Math.max(1,(this.floor||1)*8+(this.totalKills||0)+Math.floor((this.totalGold||0)/15)+(victory?60:0));
+    const harvestLvl=Meta.getLevel('harvest');
+    if(harvestLvl>0)earned=Math.floor(earned*(1+harvestLvl*.1));
     Meta.award(earned);
     return `<br>🔮 Esencja dusz: +${earned} (łącznie: ${Meta.essence()})`;
   },
@@ -152,6 +154,27 @@ Object.assign(Game, {
     this.sound.stopAmbient();
     const ess=this._awardRunEssence(true);
     this._showEndScreen('win-screen','win-stats',`${this._buildRunSummaryLine()}<br>Pokonałeś wszystkie ${MAX_FLOOR} pięter lochu!${ess}`);
+  },
+
+  // ---- ABYSS (endless mode) ----
+  enterAbyss(){
+    if(this.running)return; // guard against double-clicks
+    document.getElementById('win-screen').style.display='none';
+    this.endlessMode=true;
+    this.floor++;
+    this._stairsDescended=(this._stairsDescended||0)+1;
+    this.shopStock=null;
+    this.paused=true;
+    this.running=true;
+    this.lastTime=performance.now();
+    this.log('🕳️ Zstępujesz do Otchłani... Nie ma już powrotu.','boss');
+    this.showFloorTransition(()=>{
+      this.generateFloor();
+      this.sound.stairs();
+      this.paused=false;
+      Achievements.checkAll(this);
+    });
+    requestAnimationFrame(t=>this.loop(t));
   },
   
   // ---- SHOP UI ----

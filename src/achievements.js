@@ -140,6 +140,16 @@ const Achievements = {
     {id:'rift_emp_2',name:'Znak Otchłani',desc:'Zyskaj 2 wzmocnienia ze Szczeliny',icon:'🜁',check:g=>(g._riftEmpowerments||0)>=2,reward:'+3% Krytyk +6 Max MP',apply:p=>{p.critChance+=.03;p.maxMp+=6;p.mp+=6;},done:false},
     {id:'obelisk_3',name:'Szept Monolitu',desc:'Aktywuj 3 Obeliski Pustki',icon:'🗿',check:g=>(g._voidObelisksUsed||0)>=3,reward:'+2 DEF +8 Max MP',apply:p=>{p.def+=2;p.maxMp+=8;p.mp+=8;},done:false},
     {id:'obelisk_boon_2',name:'Pieczęć Pustki',desc:'Zyskaj 2 błogosławieństwa Obelisku',icon:'🔮',check:g=>(g._obeliskBoons||0)>=2,reward:'+2 ATK +3% Krytyk',apply:p=>{p.atk+=2;p.critChance+=.03;},done:false},
+    {id:'abyss_enter',name:'Za Krawędzią',desc:'Zejdź do Otchłani po zwycięstwie',icon:'🕳️',check:g=>!!g.endlessMode,reward:'+10 Max HP +3 ATK',apply:p=>{p.maxHp+=10;p.hp+=10;p.atk+=3;},done:false},
+    {id:'abyss_3',name:'Echo Głębin',desc:'Dotrzyj na 3. piętro Otchłani',icon:'🌑',check:g=>g.endlessMode&&g.floor>=13,reward:'+3 DEF +10 Max MP',apply:p=>{p.def+=3;p.maxMp+=10;p.mp+=10;},done:false},
+    {id:'abyss_5',name:'Głębia Szaleństwa',desc:'Dotrzyj na 5. piętro Otchłani',icon:'🕳️',check:g=>g.endlessMode&&g.floor>=15,reward:'+4 ATK +4 DEF',apply:p=>{p.atk+=4;p.def+=4;},done:false},
+    {id:'abyss_10',name:'Dno, Którego Nie Ma',desc:'Dotrzyj na 10. piętro Otchłani',icon:'🌌',check:g=>g.endlessMode&&g.floor>=20,reward:'+25 Max HP +5 ATK +5 DEF',apply:p=>{p.maxHp+=25;p.hp+=25;p.atk+=5;p.def+=5;},done:false},
+    {id:'minions_10',name:'Władca Marionetek',desc:'Wskrześ 10 sług',icon:'💀',check:g=>(g._minionsRaised||0)>=10,reward:'+10 Max MP +2 ATK',apply:p=>{p.maxMp+=10;p.mp+=10;p.atk+=2;},done:false},
+    {id:'minion_kills_30',name:'Armia Umarłych',desc:'Twoje sługi pokonają 30 wrogów',icon:'⚰️',check:g=>(g._minionKills||0)>=30,reward:'+3 ATK +10 Max HP',apply:p=>{p.atk+=3;p.maxHp+=10;p.hp+=10;},done:false},
+    {id:'corpse_burst_10',name:'Profanator',desc:'Użyj 10 razy Eksplozji Zwłok',icon:'🩸',check:g=>(g._corpseBurstsCast||0)>=10,reward:'+2 ATK +8 Max MP',apply:p=>{p.atk+=2;p.maxMp+=8;p.mp+=8;},done:false},
+    {id:'dark_pact_8',name:'Cena Mocy',desc:'Zawrzyj 8 Mrocznych Paktów',icon:'🕯️',check:g=>(g._darkPactsCast||0)>=8,reward:'+12 Max HP +6 Max MP',apply:p=>{p.maxHp+=12;p.hp+=12;p.maxMp+=6;p.mp+=6;},done:false},
+    {id:'scrolls_5',name:'Uczony Lochu',desc:'Odczytaj 5 zwojów',icon:'📜',check:g=>(g._scrollsUsed||0)>=5,reward:'+6 Max MP +1 DEF',apply:p=>{p.maxMp+=6;p.mp+=6;p.def+=1;},done:false},
+    {id:'scrolls_15',name:'Archiwista Pustki',desc:'Odczytaj 15 zwojów',icon:'📚',check:g=>(g._scrollsUsed||0)>=15,reward:'+2 ATK +2 DEF +6 Max MP',apply:p=>{p.atk+=2;p.def+=2;p.maxMp+=6;p.mp+=6;},done:false},
   ],
   
   checkAll(game){

@@ -18,7 +18,8 @@ const EliteAffixes = {
   tryMakeElite(enemy,floor){
     // chance increases with floor depth, never elites on floor 1
     if(floor<=1)return;
-    const chance=Math.min(0.26,0.04+floor*0.022); // 8.4% on floor 2 → cap 26%
+    const cap=floor>10?0.40:0.26; // w Otchłani elity są znacznie częstsze
+    const chance=Math.min(cap,0.04+floor*0.022); // 8.4% on floor 2 → cap 26% (40% w Otchłani)
     if(!Util.chance(chance))return;
     
     const affix=Util.pick(this.pool);

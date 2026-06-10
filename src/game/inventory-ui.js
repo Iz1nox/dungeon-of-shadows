@@ -58,7 +58,7 @@ Object.assign(Game, {
   },
 
   _groupAndSortInventoryItems(inventory){
-    const groups={potion:[],weapon:[],armor:[],ring:[],other:[]};
+    const groups={potion:[],scroll:[],weapon:[],armor:[],ring:[],other:[]};
     const rarityRank={common:0,uncommon:1,rare:2,epic:3,legendary:4};
     for(const item of inventory){
       if(groups[item.type])groups[item.type].push(item);
@@ -89,6 +89,12 @@ Object.assign(Game, {
       else if(item.subtype==='obelisk')desc=`HP+${item.value} MP+${item.mpValue||0} ATK+${item.atkValue||0} DEF+${item.defValue||0} (${item.duration}s)`;
       else desc=`+${item.value}`;
     }
+    if(item.type==='scroll'){
+      if(item.subtype==='firestorm')desc=`Ogień ${item.damage} DMG w promieniu ${item.radius}`;
+      else if(item.subtype==='teleport')desc='Teleport w losowe miejsce';
+      else if(item.subtype==='frost')desc=`Zamraża widocznych wrogów (${item.duration}s)`;
+      else if(item.subtype==='ward')desc=`DEF +${item.value} (${item.duration}s)`;
+    }
     if(item.atkBonus)desc+=`ATK +${item.atkBonus} `;
     if(item.defBonus)desc+=`DEF +${item.defBonus} `;
     if(item.critBonus)desc+=`KRYT +${Math.round(item.critBonus*100)}% `;
@@ -110,6 +116,7 @@ Object.assign(Game, {
   _buildInventorySectionsHtml(groups){
     const ordered=[
       ['potion','🧪 MIKSTURY'],
+      ['scroll','📜 ZWOJE'],
       ['weapon','⚔ BROŃ'],
       ['armor','🛡 ZBROJE'],
       ['ring','💍 PIERŚCIENIE'],
@@ -185,11 +192,22 @@ Object.assign(Game, {
     return html;
   },
 
+  _buildTooltipScrollStatsHtml(item){
+    if(item.type!=='scroll')return '';
+    let html='';
+    if(item.subtype==='firestorm')html+=`<div class="tt-stat">🔥 Ognista nawałnica: ${item.damage} DMG w promieniu ${item.radius}</div>`;
+    if(item.subtype==='teleport')html+=`<div class="tt-stat">🌀 Przenosi w losowe miejsce na piętrze</div>`;
+    if(item.subtype==='frost')html+=`<div class="tt-stat">❄ Zamraża wszystkich widocznych wrogów na ${item.duration}s</div>`;
+    if(item.subtype==='ward')html+=`<div class="tt-stat">🛡 DEF +${item.value} na ${item.duration}s</div>`;
+    return html;
+  },
+
   _buildTooltipBaseStatsHtml(item){
     let html='';
     html+=this._buildTooltipCoreStatsHtml(item);
     html+=this._buildTooltipEffectStatsHtml(item);
     html+=this._buildTooltipPotionStatsHtml(item);
+    html+=this._buildTooltipScrollStatsHtml(item);
     return html;
   },
 

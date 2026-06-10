@@ -12,7 +12,9 @@ const ItemDB = {
     {name:'Lodowy Miecz',icon:'🗡️',type:'weapon',baseAtk:12,rarity:'rare',effect:'freeze'},
     {name:'Ognisty Topór',icon:'🪓',type:'weapon',baseAtk:15,rarity:'rare',effect:'burn'},
     {name:'Miecz Cieni',icon:'⚔️',type:'weapon',baseAtk:20,rarity:'epic',effect:'lifesteal'},
+    {name:'Kosa Żniwiarza',icon:'⚰️',type:'weapon',baseAtk:22,rarity:'epic',effect:'reap'},
     {name:'Ostrze Zagłady',icon:'🗡️',type:'weapon',baseAtk:30,rarity:'legendary',effect:'execute'},
+    {name:'Kieł Otchłani',icon:'🗡️',type:'weapon',baseAtk:32,rarity:'legendary',effect:'lifesteal'},
     {name:'Młot Monolitu',icon:'🔨',type:'weapon',baseAtk:28,rarity:'legendary',effect:'obeliskStrike'},
     {name:'Tasak Szczeliny',icon:'🪓',type:'weapon',baseAtk:29,rarity:'legendary',effect:'riftSlash'},
     {name:'Szabla Zwierciadła',icon:'🗡️',type:'weapon',baseAtk:28,rarity:'legendary',effect:'mirrorBlade'},
@@ -22,6 +24,8 @@ const ItemDB = {
     {name:'Skórzana Zbroja',icon:'🦺',type:'armor',baseDef:2,rarity:'common'},
     {name:'Kolczuga',icon:'🛡️',type:'armor',baseDef:5,rarity:'uncommon'},
     {name:'Płytowa Zbroja',icon:'🛡️',type:'armor',baseDef:8,rarity:'rare'},
+    {name:'Kościany Pancerz',icon:'🦴',type:'armor',baseDef:10,rarity:'rare'},
+    {name:'Całun Otchłani',icon:'🕸️',type:'armor',baseDef:16,rarity:'epic'},
     {name:'Zbroja Smoka',icon:'🛡️',type:'armor',baseDef:14,rarity:'epic',effect:'fireResist'},
     {name:'Eteryczna Zbroja',icon:'🛡️',type:'armor',baseDef:22,rarity:'legendary',effect:'manaShield'},
     {name:'Kirys Szczelinowej Straży',icon:'🛡️',type:'armor',baseDef:21,rarity:'legendary',effect:'riftAegis'},
@@ -41,12 +45,21 @@ const ItemDB = {
     {name:'Eliksir Mirażu',icon:'🪞',type:'potion',subtype:'mirage',value:34,mpValue:34,critValue:.08,dodgeValue:.08,duration:16,rarity:'legendary'},
   ],
   
+  scrolls:[
+    {name:'Zwój Ognistej Burzy',icon:'📜',type:'scroll',subtype:'firestorm',damage:40,radius:4,rarity:'uncommon'},
+    {name:'Zwój Teleportacji',icon:'📜',type:'scroll',subtype:'teleport',rarity:'uncommon'},
+    {name:'Zwój Mrozu',icon:'📜',type:'scroll',subtype:'frost',duration:3.5,rarity:'rare'},
+    {name:'Zwój Ochrony',icon:'📜',type:'scroll',subtype:'ward',value:8,duration:20,rarity:'rare'},
+  ],
+
   rings:[
     {name:'Pierścień Siły',icon:'💍',type:'ring',atkBonus:3,rarity:'uncommon'},
     {name:'Pierścień Ochrony',icon:'💍',type:'ring',defBonus:3,rarity:'uncommon'},
     {name:'Pierścień Życia',icon:'💍',type:'ring',hpBonus:20,rarity:'rare'},
     {name:'Pierścień Magii',icon:'💍',type:'ring',mpBonus:15,rarity:'rare'},
     {name:'Pierścień Mocy',icon:'💍',type:'ring',atkBonus:8,defBonus:5,hpBonus:30,rarity:'epic'},
+    {name:'Pierścień Nekromanty',icon:'💍',type:'ring',mpBonus:18,atkBonus:2,rarity:'epic'},
+    {name:'Pierścień Otchłani',icon:'💍',type:'ring',atkBonus:5,critBonus:.05,hpBonus:15,rarity:'legendary'},
     {name:'Pierścień Pustego Echa',icon:'💍',type:'ring',critBonus:.08,dodgeBonus:.04,mpBonus:20,rarity:'legendary',effect:'mirrorEcho'},
     {name:'Pierścień Szczelinowego Rezonansu',icon:'💍',type:'ring',defBonus:4,mpBonus:12,rarity:'legendary',effect:'riftPulse'},
     {name:'Pierścień Echa Obelisku',icon:'💍',type:'ring',critBonus:.05,mpBonus:14,rarity:'legendary',effect:'obeliskEcho'},
@@ -70,6 +83,7 @@ const ItemDB = {
     for(const a of this.armors)if(this.rarities.indexOf(a.rarity)<=ri)pool.push(a);
     for(const p of this.potions)if(this.rarities.indexOf(p.rarity)<=ri)pool.push(p);
     for(const r of this.rings)if(this.rarities.indexOf(r.rarity)<=ri)pool.push(r);
+    for(const s of this.scrolls)if(this.rarities.indexOf(s.rarity)<=ri)pool.push(s);
     
     const itemBase=Util.pick(pool);
     const item={...itemBase,id:Math.random().toString(36).substr(2,9)};

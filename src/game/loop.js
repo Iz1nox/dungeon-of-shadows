@@ -36,6 +36,7 @@ Object.assign(Game, {
   _updateEntityCombatSystems(dt){
     this.updatePlayer(dt);
     this.updateEnemies(dt);
+    this.updateMinions(dt);
     this.updateProjectiles(dt);
     this.updatePlayerBuffs(dt);
   },
@@ -81,7 +82,8 @@ Object.assign(Game, {
   },
 
   _updatePlayerManaRegenTimer(dt){
-    this.player.mp=Math.min(this.player.maxMp,this.player.mp+dt*(this.player.class==='mage'?3:1));
+    const regen=this.player.class==='mage'?3:this.player.class==='necromancer'?2.5:1;
+    this.player.mp=Math.min(this.player.maxMp,this.player.mp+dt*regen);
   },
 
   _updatePlayerCombatRuntimeTimers(dt){

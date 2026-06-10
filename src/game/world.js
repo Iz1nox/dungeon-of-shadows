@@ -11,8 +11,9 @@ Object.assign(Game, {
       warrior:{hp:120,maxHp:120,mp:40,maxMp:40,atk:12,def:8,speed:4,critChance:.1,critMult:1.5},
       mage:{hp:70,maxHp:70,mp:100,maxMp:100,atk:6,def:3,speed:4,critChance:.05,critMult:1.5},
       rogue:{hp:85,maxHp:85,mp:60,maxMp:60,atk:10,def:4,speed:5.5,critChance:.25,critMult:2},
+      necromancer:{hp:80,maxHp:80,mp:90,maxMp:90,atk:7,def:4,speed:4.2,critChance:.08,critMult:1.6},
     };
-    const classNames={warrior:'Wojownik',mage:'Mag',rogue:'Łotrzyk'};
+    const classNames={warrior:'Wojownik',mage:'Mag',rogue:'Łotrzyk',necromancer:'Nekromanta'};
     this.player={
       ...stats[cls],x:0,y:0,level:1,xp:0,xpToLevel:PROGRESSION_BALANCE.baseXpToLevel,
       gold:0,inventory:[],equipment:{weapon:null,armor:null,ring:null},relics:[],
@@ -28,6 +29,7 @@ Object.assign(Game, {
     if(cls==='warrior')this.player.attackCd=.5;
     if(cls==='rogue')this.player.attackCd=.25;
     if(cls==='mage')this.player.attackCd=.6;
+    if(cls==='necromancer')this.player.attackCd=.55;
     Meta.applyToPlayer(this.player); // persistent meta upgrades
     this._quickslotCounts={hp:0,mp:0};
     this._quickslotsCacheKey='';
@@ -136,7 +138,7 @@ Object.assign(Game, {
   },
 
   generateFloor(){
-    this.dungeon=new DungeonGenerator(MAP_W,MAP_H,this.floor).generate();
+    this.dungeon=new DungeonGenerator(MAP_W,MAP_H,this.floor,this.endlessMode).generate();
     this._applyEventCooldownToFloor();
     this.enemies=[];this.items=[];this.projectiles=[];
     this._minimapDirty=true;
@@ -144,6 +146,10 @@ Object.assign(Game, {
     // place player in first room
     const firstRoom=this.dungeon.rooms[0];
     this.player.x=firstRoom.cx;this.player.y=firstRoom.cy;
+
+    // summoned minions follow the necromancer down the stairs
+    if(!Array.isArray(this.minions))this.minions=[];
+    for(const m of this.minions){m.x=this.player.x;m.y=this.player.y;}
     
     // spawn enemies
     const enemyTypes=ContentRegistry.getEnemyTypesForFloor(this.floor);

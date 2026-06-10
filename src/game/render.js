@@ -1,13 +1,14 @@
 'use strict';
 Object.assign(Game, {
   _getFloorTransitionSubtitle(){
+    if(this.endlessMode)return this.floor%3===0?'⚠️ Coś pradawnego budzi się w głębi...':'Otchłań nie ma dna...';
     return this.floor%3===0?'⚠️ Wyczuwasz potężną obecność...':'Schodzisz głębiej w mrok...';
   },
 
   _setFloorTransitionContent(){
     const title=document.getElementById('ft-title');
     const sub=document.getElementById('ft-sub');
-    title.textContent=`📍 Piętro ${this.floor}`;
+    title.textContent=this.endlessMode?`🕳️ Otchłań ${this.floor-MAX_FLOOR}`:`📍 Piętro ${this.floor}`;
     sub.textContent=this._getFloorTransitionSubtitle();
   },
 
@@ -368,6 +369,22 @@ Object.assign(Game, {
     ctx.globalAlpha=1;
   },
 
+  _renderBomberFuse(ctx,e,ecx,ecy){
+    if(!(e.fuse>0))return;
+    const ft=e.fuseTime||.9;
+    const prog=Util.clamp(1-e.fuse/ft,0,1);
+    const r=(e.blastRadius||2.2)*TILE_SIZE;
+    ctx.globalAlpha=.14+prog*.22;
+    ctx.fillStyle='#f40';
+    ctx.beginPath();ctx.arc(ecx,ecy,r*(.35+prog*.65),0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=.45+prog*.5;
+    ctx.strokeStyle='#ff0';ctx.lineWidth=2;
+    ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.arc(ecx,ecy,r,0,Math.PI*2);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha=1;
+  },
+
   _renderChargerWindup(ctx,e,ecx,ecy){
     if(e.chargeState!=='windup')return;
     const wt=e.chargeWindupTime||.6;
@@ -401,6 +418,7 @@ Object.assign(Game, {
     this._renderEnemyBody(ctx,e,ecx,ecy,sy);
     this._renderEnemyWindup(ctx,e,ecx,ecy);
     this._renderChargerWindup(ctx,e,ecx,ecy);
+    this._renderBomberFuse(ctx,e,ecx,ecy);
     this._renderEnemyNameLabel(ctx,e,ecx,sy);
     this._renderEnemyHpBar(ctx,e,sx,sy);
     this._renderBossAura(ctx,e,sx,sy);
@@ -435,7 +453,7 @@ Object.assign(Game, {
   },
 
   _getPlayerClassColor(player){
-    return player.class==='warrior'?'#c44':player.class==='mage'?'#44c':'#4a4';
+    return player.class==='warrior'?'#c44':player.class==='mage'?'#44c':player.class==='necromancer'?'#84c':'#4a4';
   },
 
   _renderPlayerShadow(ctx,pcx,py){
@@ -467,7 +485,7 @@ Object.assign(Game, {
     ctx.strokeStyle=classColor;ctx.lineWidth=.8;
     ctx.beginPath();ctx.arc(pcx,pcy,TILE_SIZE*.40,0,Math.PI*2);ctx.stroke();
 
-    const pIcon=p.class==='warrior'?'⚔️':p.class==='mage'?'🔮':'🗡️';
+    const pIcon=p.class==='warrior'?'⚔️':p.class==='mage'?'🔮':p.class==='necromancer'?'💀':'🗡️';
     const pBob=Math.sin(this.animTime*3.5)*1.5;
     const breathe=1+Math.sin(this.animTime*3.5)*.06;
     ctx.font='18px serif';ctx.textAlign='center';
@@ -684,6 +702,7 @@ Object.assign(Game, {
   _renderSceneActors(ctx,cx,cy){
     this._renderFloorItems(ctx,cx,cy);
     this._renderEnemies(ctx,cx,cy);
+    this._renderMinions(ctx,cx,cy);
     this._renderPlayer(ctx,cx,cy);
     this._renderProjectilesAndEffects(ctx,cx,cy);
   },

@@ -52,7 +52,10 @@ Object.assign(Game, {
       voidstep:()=>this._castSpellVoidstep(spell,index),
       backstab:()=>this._castSpellBackstab(spell,index),
       beam:()=>this._castSpellBeam(spell,index),
-      shadowstep:()=>this._castSpellShadowstep(spell,index)
+      shadowstep:()=>this._castSpellShadowstep(spell,index),
+      summon:()=>this._castSpellSummon(spell),
+      corpse_burst:()=>this._castSpellCorpseBurst(spell,index),
+      dark_pact:()=>this._castSpellDarkPact(spell,index)
     };
     return handlers[spell.type]||null;
   },
@@ -113,7 +116,7 @@ Object.assign(Game, {
   _castSpellProjectile(spell){
     const p=this.player;
     const dmg=spell.damage+Math.floor(p.atk*.8);
-    const color=spell.element==='fire'?'#f80':spell.element==='ice'?'#8af':'#88f';
+    const color=spell.element==='fire'?'#f80':spell.element==='ice'?'#8af':spell.element==='shadow'?'#a875ff':'#88f';
     if(spell.element==='fire')this._fireballCasts=(this._fireballCasts||0)+1;
     this.projectiles.push(new Projectile(p.x+.5,p.y+.5,this.mouseWorldX,this.mouseWorldY,7,dmg,color,true,spell.element,false,spell.element==='fire'?'fireball':''));
     this.particles.burst(p.x+.5,p.y+.5,12,color,2.2,.35,2.4);

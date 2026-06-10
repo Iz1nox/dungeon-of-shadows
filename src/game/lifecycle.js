@@ -90,6 +90,13 @@ Object.assign(Game, {
     window.addEventListener('resize',()=>this.resize());
     
     this.playerClass=playerClass;
+    this.endlessMode=false;
+    this.minions=[];
+    this._minionsRaised=0;
+    this._minionKills=0;
+    this._corpseBurstsCast=0;
+    this._darkPactsCast=0;
+    this._scrollsUsed=0;
     this._mysticEvents=0;
     this._shadowWellsUsed=0;
     this._echoVisions=0;

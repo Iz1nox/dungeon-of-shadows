@@ -21,6 +21,15 @@ const ShopDB = {
       stock.push({...ItemDB.potions[5],price:80+floor*6,id:Math.random().toString(36).substr(2,9)});
       stock.push({...ItemDB.potions[6],price:80+floor*6,id:Math.random().toString(36).substr(2,9)});
     }
+    // Scrolls (from floor 2 up)
+    if(floor>=2){
+      const scrollCount=Util.rand(1,2);
+      for(let i=0;i<scrollCount;i++){
+        const scroll={...Util.pick(ItemDB.scrolls),id:Math.random().toString(36).substr(2,9)};
+        scroll.price=Math.floor((scroll.rarity==='rare'?55:32)*(1+floor*0.12));
+        stock.push(scroll);
+      }
+    }
     // Random equipment items (2-4 pieces)
     const eqCount=Util.rand(2,4);
     for(let i=0;i<eqCount;i++){

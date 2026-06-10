@@ -140,9 +140,24 @@ Object.assign(Game, {
     if(!Number.isFinite(d.wellSustainTimer))d.wellSustainTimer=0;
     if(!Number.isFinite(d.lastRiftFloor))d.lastRiftFloor=0;
     if(!Number.isFinite(d.lastObeliskFloor))d.lastObeliskFloor=0;
+    if(typeof d.endlessMode!=='boolean')d.endlessMode=false;
+    if(!Number.isFinite(d.minionsRaised))d.minionsRaised=0;
+    if(!Number.isFinite(d.minionKills))d.minionKills=0;
+    if(!Number.isFinite(d.corpseBurstsCast))d.corpseBurstsCast=0;
+    if(!Number.isFinite(d.darkPactsCast))d.darkPactsCast=0;
+    if(!Number.isFinite(d.scrollsUsed))d.scrollsUsed=0;
   },
 
   _applySaveVersionMigrations(d,version){
+    if(version<89){
+      // 2.0 "Echa Otchłani": tryb endless + statystyki nekromanty i zwojów
+      if(typeof d.endlessMode!=='boolean')d.endlessMode=false;
+      if(!Number.isFinite(d.minionsRaised))d.minionsRaised=0;
+      if(!Number.isFinite(d.minionKills))d.minionKills=0;
+      if(!Number.isFinite(d.corpseBurstsCast))d.corpseBurstsCast=0;
+      if(!Number.isFinite(d.darkPactsCast))d.darkPactsCast=0;
+      if(!Number.isFinite(d.scrollsUsed))d.scrollsUsed=0;
+    }
     if(version<88){
       if(!Number.isFinite(d.obeliskAugursSlain))d.obeliskAugursSlain=0;
     }
@@ -485,7 +500,14 @@ Object.assign(Game, {
   },
 
   _restoreRunStateFromSave(saveData,loadedClass){
-    this.floor=Number.isFinite(saveData.floor)?Util.clamp(Math.floor(saveData.floor),1,MAX_FLOOR):1;
+    this.endlessMode=saveData.endlessMode===true;
+    const floorCap=this.endlessMode?9999:MAX_FLOOR;
+    this.floor=Number.isFinite(saveData.floor)?Util.clamp(Math.floor(saveData.floor),1,floorCap):1;
+    this._minionsRaised=this._safeRunInt(saveData.minionsRaised);
+    this._minionKills=this._safeRunInt(saveData.minionKills);
+    this._corpseBurstsCast=this._safeRunInt(saveData.corpseBurstsCast);
+    this._darkPactsCast=this._safeRunInt(saveData.darkPactsCast);
+    this._scrollsUsed=this._safeRunInt(saveData.scrollsUsed);
     this.totalKills=this._safeRunInt(saveData.totalKills);
     this.totalGold=this._safeRunInt(saveData.totalGold);
     this.gameTime=Number.isFinite(saveData.gameTime)?Math.max(0,saveData.gameTime):0;
@@ -675,6 +697,7 @@ Object.assign(Game, {
   },
 
   _restoreEntitiesFromSave(saveData){
+    this.minions=[]; // summons are transient and never serialized
     const loadedEnemies=Array.isArray(saveData.enemies)?saveData.enemies:[];
     this.enemies=loadedEnemies.map(e=>({
       ...e,
@@ -763,6 +786,12 @@ Object.assign(Game, {
       totalGold:this.totalGold,
       gameTime:this.gameTime,
       playerClass:this.playerClass,
+      endlessMode:this.endlessMode===true,
+      minionsRaised:this._minionsRaised||0,
+      minionKills:this._minionKills||0,
+      corpseBurstsCast:this._corpseBurstsCast||0,
+      darkPactsCast:this._darkPactsCast||0,
+      scrollsUsed:this._scrollsUsed||0,
       bossKills:this._bossKills||0,
       maxCombo:this._maxCombo||0,
       mysticEvents:this._mysticEvents||0,
@@ -966,8 +995,9 @@ Object.assign(Game, {
     if(compatTag!==SAVE_COMPAT_TAG){
       throw new Error(`Zapis nie jest zgodny z linią ${GAME_VERSION}. Wersja 2.0 używa nowego formatu save.`);
     }
-    if(parsedVersion!==SAVE_SCHEMA_VERSION){
-      throw new Error(`Niezgodna wersja zapisu (save v${parsedVersion}, gra v${SAVE_SCHEMA_VERSION})`);
+    // starsze zapisy linii 2.x są migrowane w górę; odrzucamy tylko nowsze od gry
+    if(parsedVersion>SAVE_SCHEMA_VERSION){
+      throw new Error(`Zapis pochodzi z nowszej wersji gry (save v${parsedVersion}, gra v${SAVE_SCHEMA_VERSION})`);
     }
   },
 

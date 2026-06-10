@@ -34,7 +34,7 @@ Object.assign(Game, {
       atk:`⚔ ATK: ${totalAtk}`,
       def:`🛡 DEF: ${totalDef}`,
       gold:`💰 Złoto: ${player.gold}`,
-      floor:`📍 Piętro ${this.floor}/${MAX_FLOOR}`,
+      floor:this.endlessMode?`🕳️ Otchłań ${this.floor-MAX_FLOOR}`:`📍 Piętro ${this.floor}/${MAX_FLOOR}`,
       kills:`💀 Zabici: ${this.totalKills}`
     };
   },
@@ -95,7 +95,7 @@ Object.assign(Game, {
     const floorEventStatus=`FEvent: ${traceSummary?traceSummary.shortStatus:'R-off W-off V-off O-off'}`;
     const lines=[
       `FPS: ${Math.round(this._fpsSmoothed||0)}`,
-      `Floor: ${this.floor}/${MAX_FLOOR}`,
+      this.endlessMode?`Floor: ${this.floor} (Abyss)`:`Floor: ${this.floor}/${MAX_FLOOR}`,
       `Enemies: ${this.enemies.length}`,
       `Buffs: ${p.buffs.length}`,
       `Combo: x${p.combo||0} (max ${this._maxCombo||0})`,
@@ -367,7 +367,8 @@ Object.assign(Game, {
     ctx.fillStyle='#4af';
     ctx.font='bold 18px monospace';
     ctx.textAlign='center';
-    ctx.fillText(`📍 Piętro ${this.floor}/${MAX_FLOOR} — Naciśnij Tab aby zamknąć`,W/2,oy-12);
+    const floorLabel=this.endlessMode?`🕳️ Otchłań ${this.floor-MAX_FLOOR}`:`📍 Piętro ${this.floor}/${MAX_FLOOR}`;
+    ctx.fillText(`${floorLabel} — Naciśnij Tab aby zamknąć`,W/2,oy-12);
 
     ctx.font='12px monospace';ctx.textAlign='left';
     this._drawFullMapLegend(ctx,ox,oy,scale);
