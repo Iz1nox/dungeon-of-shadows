@@ -247,6 +247,8 @@ Object.assign(Game, {
         case TILE.FLOOR:
         case TILE.CORRIDOR: return vis?'#776':'#443';
         case TILE.DOOR: return '#986';
+        case TILE.LOCKED_DOOR: return '#fd5';
+        case TILE.ARENA: return '#f55';
         case TILE.STAIRS_DOWN: return '#4af';
         case TILE.WATER: return '#248';
         case TILE.LAVA: return '#a40';
@@ -267,6 +269,8 @@ Object.assign(Game, {
       case TILE.FLOOR:
       case TILE.CORRIDOR: return vis?'#666':'#333';
       case TILE.DOOR: return '#864';
+      case TILE.LOCKED_DOOR: return '#fd5';
+      case TILE.ARENA: return '#f55';
       case TILE.STAIRS_DOWN: return '#4af';
       case TILE.WATER: return '#248';
       case TILE.LAVA: return '#a40';

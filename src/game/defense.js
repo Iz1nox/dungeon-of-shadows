@@ -386,6 +386,8 @@ Object.assign(Game, {
 
     if(this._tryPlayerDodge())return;
 
+    if(this.floorAffix&&this.floorAffix.dmgTakenMult)dmg*=this.floorAffix.dmgTakenMult;
+
     const armor=p.equipment.armor;
     let def=p.def+(armor?armor.baseDef:0)+this._getObeliskWardDefenseBonus();
     dmg=this._applyPlayerManaShields(dmg);

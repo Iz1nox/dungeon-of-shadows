@@ -91,6 +91,10 @@ Object.assign(Game, {
     
     this.playerClass=playerClass;
     this.endlessMode=false;
+    this.floorAffix=null;
+    this._arenaRemaining=0;
+    this._arenaRewardX=null;
+    this._arenaRewardY=null;
     this.minions=[];
     this._minionsRaised=0;
     this._minionKills=0;

@@ -220,9 +220,30 @@ Object.assign(Game, {
       case TILE.OBELISK:
         this._renderSpecialSpotTile(ctx,x,y,sx,sy,alpha,{icon:'🗿',color:'#6f93ff',pulseSpeed:2.8,spin:.3});
         return true;
+      case TILE.ARENA:
+        this._renderSpecialSpotTile(ctx,x,y,sx,sy,alpha,{icon:'⚔️',color:'#ff6655',pulseSpeed:3.6,spin:1.1});
+        return true;
       default:
         return false;
     }
+  },
+
+  _renderLockedDoorTile(ctx,sx,sy){
+    this._renderDoorTile(ctx,sx,sy);
+    // złota kłódka
+    const cx=sx+TILE_SIZE/2,cy=sy+TILE_SIZE*.5;
+    const glow=.4+Math.sin(this.animTime*2.5)*.2;
+    ctx.globalAlpha=glow;
+    ctx.fillStyle='#ffd870';
+    ctx.beginPath();ctx.arc(cx,cy,7,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#e8b24a';
+    ctx.fillRect(cx-3.5,cy-2,7,6.5);
+    ctx.strokeStyle='#e8b24a';ctx.lineWidth=1.6;
+    ctx.beginPath();ctx.arc(cx,cy-2,2.6,Math.PI,0);ctx.stroke();
+    ctx.fillStyle='#5a4010';
+    ctx.beginPath();ctx.arc(cx,cy+.6,1.1,0,Math.PI*2);ctx.fill();
+    ctx.fillRect(cx-.5,cy+.6,1,2);
   },
 
   _renderDoorTile(ctx,sx,sy){
@@ -730,6 +751,9 @@ Object.assign(Game, {
       case TILE.DOOR:
         this._renderDoorTile(ctx,sx,sy);
         break;
+      case TILE.LOCKED_DOOR:
+        this._renderLockedDoorTile(ctx,sx,sy);
+        break;
       case TILE.STAIRS_DOWN: {
         this._renderStairsDownTile(ctx,x,y,sx,sy,alpha);
         break;
@@ -750,6 +774,7 @@ Object.assign(Game, {
       case TILE.WELL:
       case TILE.RIFT:
       case TILE.OBELISK:
+      case TILE.ARENA:
         this._renderInteractiveTile(ctx,tile,x,y,sx,sy,alpha,visible);
         break;
     }

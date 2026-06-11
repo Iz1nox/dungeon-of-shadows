@@ -212,17 +212,88 @@ Object.assign(Game, {
   _handleChestInteraction(tx,ty){
     const p=this.player;
     this.dungeon.map[ty][tx]=TILE.FLOOR;
+    // niektóre skrzynie tylko UDAJĄ skrzynie...
+    if(this.floor>=3&&Util.chance(.16)){
+      const mimic=this._makeEnemy(EnemyDB.special.mimic,tx,ty);
+      mimic.alerted=true;
+      mimic.guaranteedLoot=true;
+      this._applyFloorAffixToEnemy(mimic);
+      this.enemies.push(mimic);
+      this.log('😱 To MIMIK! Skrzynia ożyła!','boss');
+      this.particles.burst(tx+.5,ty+.5,22,'#c9a85a',2.6,.5,3);
+      this.screenFX.shake(7,.3);
+      this.sound.boss();
+      return;
+    }
     this._chestsOpened=(this._chestsOpened||0)+1;
-    const loot=ContentRegistry.generateLoot(this.floor,1);
+    const lootLuck=1+((this.floorAffix&&this.floorAffix.lootLuck)||0);
+    const loot=ContentRegistry.generateLoot(this.floor,lootLuck);
     loot.x=tx;loot.y=ty;
     this.items.push(loot);
     let gold=Util.rand(10,30+this.floor*5);
     if(p.talents&&p.talents.goldFind>0)gold=Math.floor(gold*(1+p.talents.goldFind));
+    if(this.floorAffix&&this.floorAffix.goldMult)gold=Math.floor(gold*this.floorAffix.goldMult);
     p.gold+=gold;this.totalGold+=gold;
     this.log(`📦 Skrzynia: ${loot.icon} ${loot.name} + ${gold}💰`,'item');
     this.particles.gold(tx+.5,ty+.5);
     this.sound.pickup();
     Achievements.checkAll(this);
+  },
+
+  // arena: fale wrogów wokół kręgu, nagroda po wyczyszczeniu
+  _handleArenaInteraction(tx,ty){
+    this.dungeon.map[ty][tx]=TILE.FLOOR;
+    const types=ContentRegistry.getEnemyTypesForFloor(this.floor);
+    const count=Math.min(14,5+Math.floor(this.floor*.8));
+    let spawned=0;
+    for(let i=0;i<count*4&&spawned<count;i++){
+      const a=Math.random()*Math.PI*2;
+      const r=2.5+Math.random()*2.5;
+      const sx=tx+.5+Math.cos(a)*r,sy=ty+.5+Math.sin(a)*r;
+      if(!this.dungeon.isPassable(Math.floor(sx),Math.floor(sy)))continue;
+      const e=this._makeEnemy(Util.pick(types),sx,sy);
+      e.alerted=true;
+      e.arenaSpawn=true;
+      EliteAffixes.tryMakeElite(e,this.floor+2);
+      this._applyFloorAffixToEnemy(e);
+      this.enemies.push(e);
+      this.particles.magic(sx+.5,sy+.5,'#ff7a66');
+      spawned++;
+    }
+    this._arenaRemaining=spawned;
+    this._arenaRewardX=tx;
+    this._arenaRewardY=ty;
+    this.log(`⚔️ ARENA! Pokonaj ${spawned} przeciwników, a Otchłań cię wynagrodzi!`,'boss');
+    this.screenFX.shake(8,.4);
+    this.screenFX.flash('#ff6655',.15);
+    this.sound.boss();
+  },
+
+  // zamknięte drzwi otwiera klucz znaleziony na piętrze
+  _tryOpenLockedDoorNearby(){
+    const p=this.player;
+    const px=Math.floor(p.x+.5),py=Math.floor(p.y+.5);
+    for(const[dx,dy]of[[0,-1],[0,1],[-1,0],[1,0]]){
+      const tx=px+dx,ty=py+dy;
+      if(this.dungeon.map[ty]?.[tx]!==TILE.LOCKED_DOOR)continue;
+      const keyIdx=p.inventory.findIndex(i=>i.type==='key');
+      if(keyIdx===-1){
+        this.log('🔒 Zamknięte na głucho. Klucz 🗝️ nosi ktoś na tym piętrze...','info');
+        this.sound.ui();
+        return true;
+      }
+      p.inventory.splice(keyIdx,1);
+      this._markInventoryDirty();
+      this.dungeon.map[ty][tx]=TILE.FLOOR;
+      this.particles.gold(tx+.5,ty+.5);
+      this.particles.magic(tx+.5,ty+.5,'#ffd870');
+      this.log('🗝️ Skarbiec otwarty!','item');
+      this.sound.door();
+      this.screenFX.flash('#ffe9b0',.1);
+      FOV.compute(this.dungeon,px,py,FOV_RADIUS);
+      return true;
+    }
+    return false;
   },
 
   _renderChoiceButtons(container,choices,onSelect){
@@ -314,6 +385,9 @@ Object.assign(Game, {
       case TILE.OBELISK:
         this._useVoidObelisk(tx,ty);
         return true;
+      case TILE.ARENA:
+        this._handleArenaInteraction(tx,ty);
+        return true;
       default:
         return false;
     }
@@ -345,7 +419,9 @@ Object.assign(Game, {
     const p=this.player;
     const tx=Math.floor(p.x+.5),ty=Math.floor(p.y+.5);
     const tile=this.dungeon.map[ty][tx];
-    if(!this._handleTileInteraction(tile,tx,ty))this._revealAdjacentSecretWalls();
+    if(this._handleTileInteraction(tile,tx,ty))return;
+    if(this._tryOpenLockedDoorNearby())return;
+    this._revealAdjacentSecretWalls();
   },
   
   // ---- LEVEL UP ----

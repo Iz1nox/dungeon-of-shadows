@@ -137,11 +137,31 @@ Object.assign(Game, {
     };
   },
 
+  // afiks piętra modyfikuje statystyki wroga przy spawnie (też w trakcie: arena, przyzwania)
+  _applyFloorAffixToEnemy(e){
+    const aff=this.floorAffix;
+    if(!aff)return e;
+    if(aff.enemyAtkMult)e.atk=Math.floor(e.atk*aff.enemyAtkMult);
+    if(aff.enemySpeedMult)e.speed*=aff.enemySpeedMult;
+    return e;
+  },
+
+  _rollFloorAffix(){
+    this.floorAffix=null;
+    if(!this.endlessMode||this.floor<=MAX_FLOOR)return;
+    if(!Util.chance(FLOOR_AFFIX_CHANCE))return;
+    this.floorAffix=Util.pick(FLOOR_AFFIXES);
+  },
+
   generateFloor(){
     this.dungeon=new DungeonGenerator(MAP_W,MAP_H,this.floor,this.endlessMode).generate();
     this._applyEventCooldownToFloor();
     this.enemies=[];this.items=[];this.projectiles=[];
     this._playerFocusTarget=null;
+    this._arenaRemaining=0;
+    this._arenaRewardX=null;
+    this._arenaRewardY=null;
+    this._rollFloorAffix();
     this._minimapDirty=true;
     
     // place player in first room
@@ -154,7 +174,8 @@ Object.assign(Game, {
     
     // spawn enemies
     const enemyTypes=ContentRegistry.getEnemyTypesForFloor(this.floor);
-    const enemyCount=Math.floor(ENCOUNTER_BALANCE.baseEnemyCount+this.floor*ENCOUNTER_BALANCE.enemyCountPerFloor);
+    let enemyCount=Math.floor(ENCOUNTER_BALANCE.baseEnemyCount+this.floor*ENCOUNTER_BALANCE.enemyCountPerFloor);
+    if(this.floorAffix&&this.floorAffix.enemyCountMult)enemyCount=Math.floor(enemyCount*this.floorAffix.enemyCountMult);
     for(let i=0;i<enemyCount;i++){
       const room=Util.pick(this.dungeon.rooms.slice(1));
       const et=Util.pick(enemyTypes);
@@ -163,7 +184,20 @@ Object.assign(Game, {
       if(!this.dungeon.isPassable(ex,ey))continue;
       const enemy=this._makeEnemy(et,ex,ey);
       EliteAffixes.tryMakeElite(enemy,this.floor);
+      this._applyFloorAffixToEnemy(enemy);
       this.enemies.push(enemy);
+    }
+    // klucz do skarbca nosi losowy potwór na piętrze
+    if(this._findTiles(TILE.LOCKED_DOOR).length>0){
+      const carriers=this.enemies.filter(e=>!e.isBoss);
+      if(carriers.length){
+        const keeper=Util.pick(carriers);
+        keeper.carriesKey=true;
+        keeper.name='🗝️ '+keeper.name;
+      }else{
+        const room=Util.pick(this.dungeon.rooms);
+        this.items.push({name:'Klucz do skarbca',icon:'🗝️',type:'key',rarity:'rare',x:room.cx,y:room.cy,id:Math.random().toString(36).substr(2,9)});
+      }
     }
     
     // boss every 3 floors + the final guardian on the last floor
@@ -195,12 +229,30 @@ Object.assign(Game, {
     }
     
     // gold scattered
+    const goldMult=(this.floorAffix&&this.floorAffix.goldMult)||1;
     for(let i=0;i<8+this.floor*2;i++){
       const room=Util.pick(this.dungeon.rooms);
       const gx=Util.rand(room.x,room.x+room.w-1);
       const gy=Util.rand(room.y,room.y+room.h-1);
       if(this.dungeon.isPassable(gx,gy)){
-        this.items.push({name:'Złoto',icon:'💰',type:'gold',value:Util.rand(3,10+this.floor*3),rarity:'common',x:gx,y:gy,id:Math.random().toString(36).substr(2,9)});
+        this.items.push({name:'Złoto',icon:'💰',type:'gold',value:Math.floor(Util.rand(3,10+this.floor*3)*goldMult),rarity:'common',x:gx,y:gy,id:Math.random().toString(36).substr(2,9)});
+      }
+    }
+
+    // biblioteka: czasem jedna komnata kryje zbiór zwojów
+    if(this.dungeon.rooms.length>4&&Util.chance(.2)){
+      const libRoom=Util.pick(this.dungeon.rooms.slice(1,-1));
+      let placed=0;
+      for(let i=0;i<12&&placed<3;i++){
+        const lx=Util.rand(libRoom.x+1,libRoom.x+libRoom.w-2);
+        const ly=Util.rand(libRoom.y+1,libRoom.y+libRoom.h-2);
+        if(!this.dungeon.isPassable(lx,ly))continue;
+        this.items.push({...Util.pick(ItemDB.scrolls),x:lx,y:ly,id:Math.random().toString(36).substr(2,9)});
+        placed++;
+      }
+      if(placed>0){
+        this.dungeon.lightSources.push({x:libRoom.cx,y:libRoom.cy,r:5,color:[120,160,255]});
+        this.log('📚 Czuć tu zapach starego pergaminu...','info');
       }
     }
     
@@ -210,6 +262,10 @@ Object.assign(Game, {
     this.log(`🏰 ${this.floorTheme.name}`,'info');
     const eventTrace=this._getFloorEventTraceSummary();
     if(eventTrace)this.log(eventTrace.longText,'info');
+    if(this.floorAffix){
+      this.log(`🜏 Afiks piętra: ${this.floorAffix.icon} ${this.floorAffix.name} — ${this.floorAffix.desc}`,'boss');
+      this._showToast(`${this.floorAffix.icon} ${this.floorAffix.name}`,'#c8a0ff');
+    }
     if(isBossFloor){
       this.log('⚠️ Wyczuwasz potężną obecność...','boss');
       this.sound.boss();
@@ -221,7 +277,7 @@ Object.assign(Game, {
   _makeEnemy(data,x,y){
     const scale=1+this.floor*(ENCOUNTER_BALANCE.enemyScalePerFloor||0.12);
     return{
-      ...data,x,y,maxHp:Math.floor(data.hp*scale),hp:Math.floor(data.hp*scale),
+      ...data,x,y,baseName:data.name,maxHp:Math.floor(data.hp*scale),hp:Math.floor(data.hp*scale),
       atk:Math.floor(data.atk*scale),def:Math.floor((data.def||0)*scale),
       id:Math.random().toString(36).substr(2,9),
       pathTimer:0,path:[],alertTimer:0,alerted:false,

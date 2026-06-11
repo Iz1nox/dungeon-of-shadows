@@ -141,6 +141,10 @@ Object.assign(Game, {
     if(!Number.isFinite(d.lastRiftFloor))d.lastRiftFloor=0;
     if(!Number.isFinite(d.lastObeliskFloor))d.lastObeliskFloor=0;
     if(typeof d.endlessMode!=='boolean')d.endlessMode=false;
+    if(typeof d.floorAffixId!=='string')d.floorAffixId=null;
+    if(!Number.isFinite(d.arenaRemaining))d.arenaRemaining=0;
+    if(!Number.isFinite(d.arenaRewardX))d.arenaRewardX=null;
+    if(!Number.isFinite(d.arenaRewardY))d.arenaRewardY=null;
     if(!Number.isFinite(d.minionsRaised))d.minionsRaised=0;
     if(!Number.isFinite(d.minionKills))d.minionKills=0;
     if(!Number.isFinite(d.corpseBurstsCast))d.corpseBurstsCast=0;
@@ -149,6 +153,11 @@ Object.assign(Game, {
   },
 
   _applySaveVersionMigrations(d,version){
+    if(version<91){
+      // 2.2: afiksy pięter Otchłani + arena + skarbce
+      if(typeof d.floorAffixId!=='string')d.floorAffixId=null;
+      if(!Number.isFinite(d.arenaRemaining))d.arenaRemaining=0;
+    }
     if(version<89){
       // 2.0 "Echa Otchłani": tryb endless + statystyki nekromanty i zwojów
       if(typeof d.endlessMode!=='boolean')d.endlessMode=false;
@@ -501,6 +510,10 @@ Object.assign(Game, {
 
   _restoreRunStateFromSave(saveData,loadedClass){
     this.endlessMode=saveData.endlessMode===true;
+    this.floorAffix=saveData.floorAffixId?(FLOOR_AFFIXES.find(a=>a.id===saveData.floorAffixId)||null):null;
+    this._arenaRemaining=this._safeRunInt(saveData.arenaRemaining);
+    this._arenaRewardX=Number.isFinite(saveData.arenaRewardX)?saveData.arenaRewardX:null;
+    this._arenaRewardY=Number.isFinite(saveData.arenaRewardY)?saveData.arenaRewardY:null;
     const floorCap=this.endlessMode?9999:MAX_FLOOR;
     this.floor=Number.isFinite(saveData.floor)?Util.clamp(Math.floor(saveData.floor),1,floorCap):1;
     this._minionsRaised=this._safeRunInt(saveData.minionsRaised);
@@ -779,6 +792,11 @@ Object.assign(Game, {
       attackCd:e.attackCd,
       burnTimer:e.burnTimer,freezeTimer:e.freezeTimer,poisonTimer:e.poisonTimer,
       stunTimer:e.stunTimer,
+      // 2.2: skarbiec/arena/mimik/bestiariusz
+      baseName:e.baseName,
+      carriesKey:e.carriesKey||false,
+      arenaSpawn:e.arenaSpawn||false,
+      guaranteedLoot:e.guaranteedLoot||false,
       // elite affix state (stats are already baked in — only behavior flags + label)
       elite:e.elite||false,
       eliteAffixName:e.eliteAffix?e.eliteAffix.name:null,
@@ -812,6 +830,10 @@ Object.assign(Game, {
       gameTime:this.gameTime,
       playerClass:this.playerClass,
       endlessMode:this.endlessMode===true,
+      floorAffixId:this.floorAffix?this.floorAffix.id:null,
+      arenaRemaining:this._arenaRemaining||0,
+      arenaRewardX:Number.isFinite(this._arenaRewardX)?this._arenaRewardX:null,
+      arenaRewardY:Number.isFinite(this._arenaRewardY)?this._arenaRewardY:null,
       minionsRaised:this._minionsRaised||0,
       minionKills:this._minionKills||0,
       corpseBurstsCast:this._corpseBurstsCast||0,

@@ -248,7 +248,9 @@ Object.assign(Game, {
   },
 
   _updatePlayerFov(p){
-    FOV.compute(this.dungeon,Math.floor(p.x+.5),Math.floor(p.y+.5),FOV_RADIUS+(p.class==='rogue'?2:0));
+    let radius=FOV_RADIUS+(p.class==='rogue'?2:0);
+    if(this.floorAffix&&this.floorAffix.fovPenalty)radius=Math.max(5,radius-this.floorAffix.fovPenalty);
+    FOV.compute(this.dungeon,Math.floor(p.x+.5),Math.floor(p.y+.5),radius);
   },
   
 });

@@ -38,6 +38,10 @@ const EnemyDB = {
     {name:'Wybrzmienie Otchłani',icon:'🫧',hp:200,atk:36,def:14,xp:110,gold:54,speed:.9,ai:'healer',color:'#8ad8ff',healAmount:35,healCd:4},
     {name:'Herold Końca',icon:'🌑',hp:230,atk:42,def:16,xp:125,gold:60,speed:.95,ai:'summoner',color:'#5a3aaf',summonCd:7},
   ],
+  // potwory specjalne — nie trafiają do zwykłej puli spawnów
+  special:{
+    mimic:{name:'Mimik',icon:'📦',hp:55,atk:13,def:4,xp:40,gold:45,speed:1.35,ai:'chase',color:'#c9a85a'},
+  },
   bosses:[
     {name:'Król Goblinów',icon:'👑',hp:200,atk:20,def:8,xp:100,gold:100,speed:.6,ai:'boss',color:'#0f0',
       abilities:['charge','summon'],floor:3},

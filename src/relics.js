@@ -90,6 +90,17 @@ const ENCOUNTER_BALANCE = {
   bossCcDurationMult:0.25,    // ogłuszenia/zamrożenia działają na bossów 4x krócej
 };
 
-const TILE = {VOID:0,WALL:1,FLOOR:2,CORRIDOR:3,DOOR:4,STAIRS_DOWN:5,STAIRS_UP:6,WATER:7,LAVA:8,TRAP:9,CHEST:10,SHRINE:11,SHOP:12,EVENT:13,WELL:14,RIFT:15,OBELISK:16,SECRET_WALL:17};
+const TILE = {VOID:0,WALL:1,FLOOR:2,CORRIDOR:3,DOOR:4,STAIRS_DOWN:5,STAIRS_UP:6,WATER:7,LAVA:8,TRAP:9,CHEST:10,SHRINE:11,SHOP:12,EVENT:13,WELL:14,RIFT:15,OBELISK:16,SECRET_WALL:17,LOCKED_DOOR:18,ARENA:19};
+
+// Afiksy pięter Otchłani (11+): każde piętro może wylosować modyfikator
+const FLOOR_AFFIXES = [
+  {id:'blood',name:'Piętro Krwi',icon:'🩸',desc:'Wrogowie +30% ATK, ale zabójstwa leczą 3% HP',enemyAtkMult:1.3,killHealPct:.03},
+  {id:'fog',name:'Gęsta Mgła',icon:'🌫️',desc:'Zasięg widzenia mocno ograniczony',fovPenalty:4},
+  {id:'goldrush',name:'Gorączka Złota',icon:'💰',desc:'Podwójne złoto, o połowę więcej wrogów',goldMult:2,enemyCountMult:1.5},
+  {id:'swift',name:'Niespokojne Cienie',icon:'💨',desc:'Wrogowie +25% szybkości',enemySpeedMult:1.25},
+  {id:'regen',name:'Pulsująca Otchłań',icon:'💜',desc:'Wrogowie regenerują 1% HP/s',enemyRegenPct:.01},
+  {id:'fragile',name:'Kruche Ciało',icon:'🥀',desc:'Otrzymujesz +25% obrażeń, ale łup jest lepszy',dmgTakenMult:1.25,lootLuck:2},
+];
+const FLOOR_AFFIX_CHANCE = .7;
 const DEBUG_OVERLAY_STORAGE_KEY = 'dos_debug_overlay_visible';
 

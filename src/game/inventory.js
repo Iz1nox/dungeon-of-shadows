@@ -106,6 +106,10 @@ Object.assign(Game, {
       return{label:'Odczytaj',canUse:true,reason:''};
     }
 
+    if(item.type==='key'){
+      return{label:'Klucz',canUse:false,reason:'Otwiera zamknięte drzwi — podejdź do nich i wciśnij F'};
+    }
+
     if(item.type==='weapon'||item.type==='armor'||item.type==='ring'){
       return{label:'Załóż',canUse:true,reason:''};
     }

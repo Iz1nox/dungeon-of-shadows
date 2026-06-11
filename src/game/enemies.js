@@ -13,6 +13,10 @@ Object.assign(Game, {
 
   _shouldSkipEnemyAfterStatusTick(e,dt){
     if(e.hp<=0)return true;
+    // afiks Pulsującej Otchłani: wrogowie regenerują
+    if(this.floorAffix&&this.floorAffix.enemyRegenPct&&e.hp<e.maxHp){
+      e.hp=Math.min(e.maxHp,e.hp+e.maxHp*this.floorAffix.enemyRegenPct*dt);
+    }
     if(e.stunTimer>0){e.stunTimer-=dt;return true;}
     if(e.hitFlash>0)e.hitFlash-=dt;
     if(e.attackTimer>0)e.attackTimer-=dt;
@@ -456,8 +460,36 @@ Object.assign(Game, {
     this.grantXP(xpAward);
     let goldDrop=Util.rand(1,e.gold);
     if(this.player.talents&&this.player.talents.goldFind>0)goldDrop=Math.floor(goldDrop*(1+this.player.talents.goldFind));
+    if(this.floorAffix&&this.floorAffix.goldMult)goldDrop=Math.floor(goldDrop*this.floorAffix.goldMult);
     this.player.gold+=goldDrop;this.totalGold+=goldDrop;
     this.totalKills++;
+    Bestiary.recordKill(e);
+    // afiks Piętra Krwi: zabójstwa leczą
+    if(this.floorAffix&&this.floorAffix.killHealPct){
+      const heal=Math.max(1,Math.floor(this.player.maxHp*this.floorAffix.killHealPct));
+      this.player.hp=Math.min(this.player.maxHp,this.player.hp+heal);
+      this.floatingText.add(this.player.x+.5,this.player.y-.4,`+${heal}`,'#f88',.45);
+    }
+    // klucz do skarbca
+    if(e.carriesKey){
+      this.items.push({name:'Klucz do skarbca',icon:'🗝️',type:'key',rarity:'rare',x:Math.floor(e.x),y:Math.floor(e.y),id:Math.random().toString(36).substr(2,9)});
+      this.log('🗝️ Potwór upuścił klucz do skarbca!','item');
+    }
+    // arena: odliczanie i nagroda
+    if(e.arenaSpawn&&(this._arenaRemaining||0)>0){
+      this._arenaRemaining--;
+      if(this._arenaRemaining<=0&&this._arenaRewardX!==null&&this._arenaRewardX!==undefined){
+        const reward=ContentRegistry.generateLoot(this.floor,3);
+        reward.x=this._arenaRewardX;reward.y=this._arenaRewardY;
+        this.items.push(reward);
+        this.items.push({name:'Złoto',icon:'💰',type:'gold',value:40+this.floor*8,rarity:'common',x:this._arenaRewardX,y:this._arenaRewardY,id:Math.random().toString(36).substr(2,9)});
+        this.log(`🏆 Arena oczyszczona! Nagroda: ${reward.icon} ${reward.name}`,'boss');
+        this.particles.gold(this._arenaRewardX+.5,this._arenaRewardY+.5);
+        this.screenFX.flash('#ffd870',.14);
+        this.sound.levelUp();
+        this._arenaRewardX=null;this._arenaRewardY=null;
+      }
+    }
     if(e.elite)this._eliteKills=(this._eliteKills||0)+1;
     if(e.elite&&e.eliteAffix&&e.eliteAffix.name==='Mirażowy'){
       this._mirageElitesSlain=(this._mirageElitesSlain||0)+1;
@@ -507,8 +539,9 @@ Object.assign(Game, {
     this.floatingText.add(e.x+.5,e.y,`+${xpAward}xp +${goldDrop}g`,'#ff0');
     this.sound.hit();
 
-    if(Util.chance(e.isBoss?1:.25)){
-      const loot=ContentRegistry.generateLoot(this.floor,e.isBoss?2:0);
+    if(Util.chance((e.isBoss||e.guaranteedLoot)?1:.25)){
+      const lootLuckBonus=(this.floorAffix&&this.floorAffix.lootLuck)||0;
+      const loot=ContentRegistry.generateLoot(this.floor,(e.isBoss?2:e.guaranteedLoot?1:0)+lootLuckBonus);
       loot.x=Math.floor(e.x);loot.y=Math.floor(e.y);
       this.items.push(loot);
       if(e.isBoss&&loot.rarity==='legendary')this._bossLegendaryDrops=(this._bossLegendaryDrops||0)+1;

@@ -136,6 +136,19 @@ class DungeonGenerator {
     // secret caches: a hidden chest behind a disguised wall
     this._placeSecretCaches();
 
+    // vault: a carved treasure pocket behind a locked door (key on the floor's monsters)
+    this._placeVault();
+
+    // arena circle: optional wave challenge
+    if(this.floor>=4&&Util.chance(.25)){
+      const arenaCandidates=this.rooms.slice(1,-1).filter(r=>r.w>=7&&r.h>=6&&this.map[r.cy][r.cx]===TILE.FLOOR);
+      if(arenaCandidates.length){
+        const ar=Util.pick(arenaCandidates);
+        this.map[ar.cy][ar.cx]=TILE.ARENA;
+        this.lightSources.push({x:ar.cx,y:ar.cy,r:5,color:[255,110,90]});
+      }
+    }
+
     // shrine (1 per floor) — never overwrite stairs
     if(Util.chance(.5)){
       const candidates=this.rooms.filter(r=>this.map[r.cy][r.cx]!==TILE.STAIRS_DOWN&&this.map[r.cy][r.cx]!==TILE.STAIRS_UP);
@@ -226,6 +239,42 @@ class DungeonGenerator {
     }
   }
 
+  // skarbiec: 3x3 kieszeń wykuta w litej skale, wejście przez zamknięte drzwi
+  _placeVault(){
+    if(this.floor<2||!Util.chance(.35))return;
+    const dirs=[[0,-1],[0,1],[-1,0],[1,0]];
+    // zbierz kandydatów: kafel podłogi + kierunek, za którym jest lity blok 5x5
+    const candidates=[];
+    for(const room of this.rooms){
+      for(let y=room.y;y<room.y+room.h;y++)for(let x=room.x;x<room.x+room.w;x++){
+        if(this.map[y]?.[x]!==TILE.FLOOR)continue;
+        for(const[dx,dy]of dirs){
+          // środek skarbca 3 kafle w głąb ściany
+          const cx=x+dx*3,cy=y+dy*3;
+          // cały blok 5x5 wokół środka musi być litą ścianą (kieszeń zostanie szczelna)
+          let solid=true;
+          for(let oy=-2;oy<=2&&solid;oy++)for(let ox=-2;ox<=2;ox++){
+            const tx=cx+ox,ty=cy+oy;
+            if(tx<1||ty<1||tx>=this.w-1||ty>=this.h-1||this.map[ty][tx]!==TILE.WALL){solid=false;break;}
+          }
+          if(solid)candidates.push({doorX:x+dx,doorY:y+dy,cx,cy});
+        }
+      }
+    }
+    if(!candidates.length)return;
+    const v=Util.pick(candidates);
+    // wykuj wnętrze 3x3
+    for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){
+      this.map[v.cy+oy][v.cx+ox]=TILE.FLOOR;
+    }
+    // skarb: trzy skrzynie
+    this.map[v.cy][v.cx]=TILE.CHEST;
+    this.map[v.cy-1][v.cx-1]=TILE.CHEST;
+    this.map[v.cy+1][v.cx+1]=TILE.CHEST;
+    this.map[v.doorY][v.doorX]=TILE.LOCKED_DOOR;
+    this.lightSources.push({x:v.cx,y:v.cy,r:4,color:[255,210,110]});
+  }
+
   _placeSecretCaches(){
     const dirs=[[0,-1],[0,1],[-1,0],[1,0]];
     const maxCaches=Util.rand(1,2);
@@ -263,13 +312,13 @@ class DungeonGenerator {
   isPassable(x,y){
     if(x<0||x>=this.w||y<0||y>=this.h)return false;
     const t=this.map[y][x];
-    return t!==TILE.VOID&&t!==TILE.WALL&&t!==TILE.SECRET_WALL;
+    return t!==TILE.VOID&&t!==TILE.WALL&&t!==TILE.SECRET_WALL&&t!==TILE.LOCKED_DOOR;
   }
 
   isTransparent(x,y){
     if(x<0||x>=this.w||y<0||y>=this.h)return false;
     const t=this.map[y][x];
-    return t!==TILE.VOID&&t!==TILE.WALL&&t!==TILE.SECRET_WALL&&t!==TILE.DOOR;
+    return t!==TILE.VOID&&t!==TILE.WALL&&t!==TILE.SECRET_WALL&&t!==TILE.DOOR&&t!==TILE.LOCKED_DOOR;
   }
 }
 
