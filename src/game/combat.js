@@ -13,6 +13,7 @@ Object.assign(Game, {
       }
       this._rangedHits=(this._rangedHits||0)+1;
       if(proj.sourceTag==='fireball')this._fireballHits=(this._fireballHits||0)+1;
+      this._playerFocusTarget=e; // sługi skupiają ogień na celu gracza
       this.damageEnemy(e,proj.damage,proj.element);
       this.particles.burst(proj.x,proj.y,8,proj.color,2,.3);
       if(!proj.piercing){proj.alive=false;break;}
@@ -132,6 +133,7 @@ Object.assign(Game, {
         }
         this._maxCombo=Math.max(this._maxCombo||0,p.combo);
 
+        this._playerFocusTarget=e; // sługi skupiają ogień na celu gracza
         this.damageEnemy(e,dmg,'',isCrit);
         this._triggerMirrorBladeOnMelee(e,dmg);
         this._triggerRiftSlashOnMelee(e,dmg);

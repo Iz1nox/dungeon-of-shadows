@@ -6,6 +6,11 @@ Object.assign(Game, {
     const {nx,ny}=this._computePlayerMoveTarget(p,dx,dy,dt);
     const ox=p.x,oy=p.y;
     this._applyPlayerCollisionMovement(p,nx,ny);
+    if(dt>0){
+      // wygładzona prędkość gracza — strzelcy używają jej do celowania z wyprzedzeniem
+      this._playerVelX=Util.lerp(this._playerVelX||0,(p.x-ox)/dt,.25);
+      this._playerVelY=Util.lerp(this._playerVelY||0,(p.y-oy)/dt,.25);
+    }
     this._footstepTimer=(this._footstepTimer||0)-dt;
     if((p.x!==ox||p.y!==oy)&&this._footstepTimer<=0){this.sound.footstep();this._footstepTimer=.3;}
     this._updatePlayerAnimationState(p,dx,dy,dt);

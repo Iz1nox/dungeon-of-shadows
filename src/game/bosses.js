@@ -180,6 +180,25 @@ Object.assign(Game, {
     if(handler)handler();
   },
 
+  // dobór umiejętności do sytuacji zamiast czystego losowania
+  _pickBossAbility(boss,dist){
+    const candidates=[];
+    for(const a of boss.abilities){
+      if(a==='charge'||a==='stomp'||a==='mirror_dash'){
+        if(dist<6.5)candidates.push(a);          // zwarcie tylko z bliska
+      }else if(a==='fireball'||a==='breath'){
+        if(dist>2.2)candidates.push(a);          // ostrzał z dystansu
+      }else if(a==='teleport'){
+        if(dist>7||boss.hp<boss.maxHp*.35)candidates.push(a); // pościg / desperacja
+      }else if(a==='summon'){
+        if(this.enemies.length<28)candidates.push(a);         // bez zalewania areny
+      }else{
+        candidates.push(a);                       // nova/burza — zawsze groźne
+      }
+    }
+    return Util.pick(candidates.length?candidates:boss.abilities);
+  },
+
   _bossFallbackCombatAndChase(boss,dt,dist){
     const p=this.player;
     if(dist<1.5&&boss.attackTimer<=0){
@@ -210,7 +229,7 @@ Object.assign(Game, {
     }
 
     if(boss.abilityTimer<=0&&boss.abilities.length>0){
-      const ability=Util.pick(boss.abilities);
+      const ability=this._pickBossAbility(boss,dist);
       boss.abilityTimer=boss.phase>=3?1.6+Math.random()*1.2:3+Math.random()*2;
 
       this._triggerBossAbility(boss,ability,dist);

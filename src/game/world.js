@@ -141,6 +141,7 @@ Object.assign(Game, {
     this.dungeon=new DungeonGenerator(MAP_W,MAP_H,this.floor,this.endlessMode).generate();
     this._applyEventCooldownToFloor();
     this.enemies=[];this.items=[];this.projectiles=[];
+    this._playerFocusTarget=null;
     this._minimapDirty=true;
     
     // place player in first room

@@ -100,8 +100,39 @@ Object.assign(Game, {
   },
 
   _updateEnemyAlertState(e,dist,visible){
+    // w ukryciu wrogowie zauważają gracza tylko tuż obok
+    if(this.player.stealthTimer>0){
+      if(dist<1.5)e.alerted=true;
+      return;
+    }
     if(dist<8&&visible)e.alerted=true;
     if(dist<3)e.alerted=true;
+  },
+
+  // ukrycie: zaalarmowany wróg idzie do ostatniej znanej pozycji gracza,
+  // a gdy tam nikogo nie ma — rozgląda się zdezorientowany
+  _seekLastKnownPosition(e,dt){
+    const lx=e.lastKnownX,ly=e.lastKnownY;
+    if(lx===undefined){
+      // nigdy nie widział gracza — błądzi
+      if(!e.patrolTarget||Util.dist(e.x,e.y,e.patrolTarget.x,e.patrolTarget.y)<1||Math.random()<dt*.2){
+        e.patrolTarget={x:e.x+Util.rand(-4,4),y:e.y+Util.rand(-4,4)};
+      }
+      this._moveToward(e,e.patrolTarget.x,e.patrolTarget.y,dt*.5);
+      return;
+    }
+    if(Util.dist(e.x,e.y,lx,ly)>.8){
+      this._moveToward(e,lx,ly,dt);
+      return;
+    }
+    if(!e._confusedShown){
+      e._confusedShown=true;
+      this.floatingText.add(e.x+.5,e.y-.5,'?','#ccc',.7);
+    }
+    if(!e.patrolTarget||Util.dist(e.x,e.y,e.patrolTarget.x,e.patrolTarget.y)<1||Math.random()<dt*.3){
+      e.patrolTarget={x:lx+Util.rand(-3,3),y:ly+Util.rand(-3,3)};
+    }
+    this._moveToward(e,e.patrolTarget.x,e.patrolTarget.y,dt*.5);
   },
 
   _runUnalertedEnemyAi(e,dt){
@@ -273,14 +304,76 @@ Object.assign(Game, {
     if(dist>8)this._chaseEnemyTowardPlayer(e,dt);
   },
 
+  // strzelec ma "oczy": strzela tylko, gdy kafel z nim jest w polu widzenia
+  // (FOV gracza jest symetryczne dla ścian — tani i dobry zamiennik LOS)
+  _enemyHasLineOfSight(e){
+    return !!this.dungeon.visible[Math.floor(e.y)]?.[Math.floor(e.x)];
+  },
+
+  // krążenie bokiem wokół gracza w oczekiwaniu na cooldown
+  _strafeEnemy(e,dt){
+    if(e.strafeDir===undefined)e.strafeDir=Math.random()<.5?1:-1;
+    if(Math.random()<dt*.4)e.strafeDir*=-1;
+    const a=Util.angle(this.player.x,this.player.y,e.x,e.y)+e.strafeDir*Math.PI/2;
+    const nx=e.x+Math.cos(a)*e.speed*dt*.6;
+    const ny=e.y+Math.sin(a)*e.speed*dt*.6;
+    if(this.dungeon.isPassable(Math.floor(nx),Math.floor(e.y)))e.x=nx;else e.strafeDir*=-1;
+    if(this.dungeon.isPassable(Math.floor(e.x),Math.floor(ny)))e.y=ny;else e.strafeDir*=-1;
+  },
+
+  // wrogowie nie zlewają się w jeden punkt — lekka separacja par
+  _applyEnemySeparation(dt){
+    const es=this.enemies;
+    for(let i=0;i<es.length;i++){
+      const a=es[i];
+      if(a.hp<=0||a.chargeState==='dash')continue;
+      for(let j=i+1;j<es.length;j++){
+        const b=es[j];
+        if(b.hp<=0||b.chargeState==='dash')continue;
+        const dx=b.x-a.x,dy=b.y-a.y;
+        const d2=dx*dx+dy*dy;
+        if(d2>=.42||d2===0)continue; // ~0.65 kratki
+        const d=Math.sqrt(d2)||.01;
+        const push=Math.min(.08,(0.65-d)*dt*3);
+        const nx=dx/d,ny=dy/d;
+        const aw=a.isBoss?0:1,bw=b.isBoss?0:1; // bossowie rozpychają, nie są rozpychani
+        const ax=a.x-nx*push*aw,ay=a.y-ny*push*aw;
+        const bx2=b.x+nx*push*bw,by2=b.y+ny*push*bw;
+        if(this.dungeon.isPassable(Math.floor(ax),Math.floor(a.y)))a.x=ax;
+        if(this.dungeon.isPassable(Math.floor(a.x),Math.floor(ay)))a.y=ay;
+        if(this.dungeon.isPassable(Math.floor(bx2),Math.floor(b.y)))b.x=bx2;
+        if(this.dungeon.isPassable(Math.floor(b.x),Math.floor(by2)))b.y=by2;
+      }
+    }
+  },
+
   _runEnemyCombatBehavior(e,dist,dt){
     this._tryEliteRiftPulse(e,dist,dt);
     this._tryEliteObeliskPulse(e,dist,dt);
     if(dist<1.2&&e.attackTimer<=0){
       this._startEnemyWindup(e);
-    }else if(e.ai==='ranged'&&dist<6&&dist>2&&e.attackTimer<=0){
-      this._enemyRangedAttack(e);
-    }else if(dist>1.2){
+      return;
+    }
+    if(e.ai==='ranged'){
+      const hasLos=this._enemyHasLineOfSight(e);
+      // za blisko: odskakuje, strzelając przez ramię
+      if(dist<2.6){
+        this._fleeFromPlayer(e,dt,.9);
+        if(hasLos&&dist>1.6&&e.attackTimer<=0)this._enemyRangedAttack(e);
+        return;
+      }
+      // dystans bojowy: strzał albo krążenie bokiem
+      if(dist<6.5&&hasLos){
+        if(e.attackTimer<=0)this._enemyRangedAttack(e);
+        else this._strafeEnemy(e,dt);
+        return;
+      }
+      // brak linii strzału / za daleko: podejdź
+      this._tryEliteTeleportBlink(e,dist,dt);
+      this._chaseEnemyTowardPlayer(e,dt);
+      return;
+    }
+    if(dist>1.2){
       this._tryEliteTeleportBlink(e,dist,dt);
       this._chaseEnemyTowardPlayer(e,dt);
     }
@@ -465,12 +558,17 @@ Object.assign(Game, {
         this._updateBossAI(e,dt,dist);
         continue;
       }
-      
-      // stealth check
-      if(p.stealthTimer>0&&dist>2&&!e.alerted)continue;
 
       if(this._updateEnemyWindup(e,dt,dist))continue;
       if(this._runUnalertedEnemyAi(e,dt))continue;
+
+      // ukrycie: zaalarmowani tracą trop i sprawdzają ostatnią znaną pozycję
+      if(p.stealthTimer>0&&dist>1.5){
+        this._seekLastKnownPosition(e,dt);
+        continue;
+      }
+      e.lastKnownX=p.x;e.lastKnownY=p.y;e._confusedShown=false;
+
       if(this._tryFleeEnemy(e,p,dist,dt))continue;
 
       this._updateEnemyPackAlert(e,dt);
@@ -481,6 +579,7 @@ Object.assign(Game, {
       this._runEnemyCombatBehavior(e,dist,dt);
     }
 
+    this._applyEnemySeparation(dt);
     this._finalizeEnemyUpdate(bossAlive);
   },
 
@@ -547,9 +646,15 @@ Object.assign(Game, {
   
   _enemyRangedAttack(e){
     const p=this.player;
-    this.projectiles.push(new Projectile(e.x+.5,e.y+.5,p.x+.5,p.y+.5,e.projectileSpeed||6,e.atk,e.projectileColor||'#f4f',false));
+    // strzelec mierzy z wyprzedzeniem — tam, gdzie gracz BĘDZIE
+    const speed=e.projectileSpeed||6;
+    const flightTime=Math.min(1.2,Util.dist(e.x,e.y,p.x,p.y)/speed);
+    const lead=.55;
+    const tx=p.x+.5+(this._playerVelX||0)*flightTime*lead;
+    const ty=p.y+.5+(this._playerVelY||0)*flightTime*lead;
+    this.projectiles.push(new Projectile(e.x+.5,e.y+.5,tx,ty,speed,e.atk,e.projectileColor||'#f4f',false));
     e.attackTimer=e.attackCd*1.5;
-    const _ra=Util.angle(e.x,e.y,p.x,p.y);
+    const _ra=Util.angle(e.x,e.y,tx,ty);
     e.attackAnim=.18;e.attackDX=Math.cos(_ra);e.attackDY=Math.sin(_ra);
   },
 

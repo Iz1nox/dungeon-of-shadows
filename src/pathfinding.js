@@ -43,7 +43,11 @@ class Pathfinder {
         const nk=key(nx,ny);
         if(closed.has(nk))continue;
         if(!map.isPassable(nx,ny))continue;
-        const ng=gScore.get(bestK)+(dx&&dy?1.414:1);
+        let ng=gScore.get(bestK)+(dx&&dy?1.414:1);
+        // wrogowie omijają niebezpieczny/spowalniający teren, gdy mają wybór
+        const t=map.map[ny]?map.map[ny][nx]:0;
+        if(t===TILE.LAVA)ng+=6;
+        else if(t===TILE.TRAP||t===TILE.WATER)ng+=1.5;
         if(!gScore.has(nk)||ng<gScore.get(nk)){
           gScore.set(nk,ng);
           parent.set(nk,bestK);

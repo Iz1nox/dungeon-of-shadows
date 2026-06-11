@@ -126,6 +126,9 @@ Object.assign(Game, {
   },
 
   _findMinionTarget(m){
+    // priorytet: cel, który gracz ostatnio zaatakował (focus fire)
+    const focus=this._playerFocusTarget;
+    if(focus&&focus.hp>0&&Util.dist(m.x,m.y,focus.x,focus.y)<9)return focus;
     let nearest=null,minD=9;
     for(const e of this.enemies){
       if(e.hp<=0)continue;
