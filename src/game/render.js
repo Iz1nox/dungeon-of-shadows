@@ -48,48 +48,44 @@ Object.assign(Game, {
     });
   },
 
+  _isSolidTile(t){
+    return t===TILE.WALL||t===TILE.SECRET_WALL||t===TILE.VOID;
+  },
+
   _renderWallTile(ctx,x,y,sx,sy){
-    const wt=this.floorTheme||FloorThemes.themes[0];
-    const wallShade=((x*7+y*13)%20)+30;
-    const baseL=wallShade/100*25;
-    ctx.fillStyle=Util.hsl(wt.wallHue,wt.wallSat,baseL);
-    ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
-    ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=1;
-    const brickOff=y%2===0?0:TILE_SIZE/4;
-    ctx.strokeRect(sx+brickOff,sy,TILE_SIZE/2,TILE_SIZE/2);
-    ctx.strokeRect(sx+brickOff,sy+TILE_SIZE/2,TILE_SIZE/2,TILE_SIZE/2);
-    const aboveTile=y>0?this.dungeon.map[y-1][x]:TILE.WALL;
-    if(aboveTile!==TILE.WALL&&aboveTile!==TILE.VOID){
-      ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(sx,sy,TILE_SIZE,3);
+    ctx.drawImage(TileArt.wallAt(x,y),sx,sy);
+    const below=y<MAP_H-1?this.dungeon.map[y+1][x]:TILE.WALL;
+    if(!this._isSolidTile(below)){
+      // south-facing wall: shaded front face (pseudo-3D)
+      ctx.drawImage(TileArt.wallFace,sx,sy);
+      ctx.fillStyle='rgba(255,255,255,0.06)';
+      ctx.fillRect(sx,sy+TILE_SIZE-1,TILE_SIZE,1);
     }
-    if((x*31+y*17)%13===0){
-      ctx.strokeStyle='rgba(0,0,0,0.4)';ctx.lineWidth=.7;
-      ctx.beginPath();
-      ctx.moveTo(sx+8,sy+4);ctx.lineTo(sx+14,sy+12);ctx.lineTo(sx+20,sy+10);
-      ctx.stroke();
+    const above=y>0?this.dungeon.map[y-1][x]:TILE.WALL;
+    if(!this._isSolidTile(above)){
+      ctx.fillStyle='rgba(255,255,255,0.05)';
+      ctx.fillRect(sx,sy,TILE_SIZE,1);
     }
+  },
+
+  _renderFloorAO(ctx,x,y,sx,sy){
+    const m=this.dungeon.map;
+    if(y>0&&this._isSolidTile(m[y-1][x]))ctx.drawImage(TileArt.aoN,sx,sy);
+    if(y<MAP_H-1&&this._isSolidTile(m[y+1][x]))ctx.drawImage(TileArt.aoS,sx,sy);
+    if(x>0&&this._isSolidTile(m[y][x-1]))ctx.drawImage(TileArt.aoW,sx,sy);
+    if(x<MAP_W-1&&this._isSolidTile(m[y][x+1]))ctx.drawImage(TileArt.aoE,sx,sy);
   },
 
   _renderFloorTile(ctx,x,y,sx,sy){
-    const ft=this.floorTheme||FloorThemes.themes[0];
-    const floorShade=((x*3+y*7)%15)+14;
-    ctx.fillStyle=Util.hsl(ft.floorHue,ft.floorSat,floorShade);
-    ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
-    ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.lineWidth=.5;
-    ctx.strokeRect(sx+.5,sy+.5,TILE_SIZE-1,TILE_SIZE-1);
-    if((x+y)%4===0){ctx.fillStyle='rgba(255,255,255,0.025)';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);}
-    if((x*11+y*23)%17===0){ctx.fillStyle='rgba(255,255,255,0.015)';ctx.beginPath();ctx.arc(sx+12,sy+18,5,0,Math.PI*2);ctx.fill();}
-    if(y>0&&(this.dungeon.map[y-1][x]===TILE.WALL)){
-      const sg=ctx.createLinearGradient(sx,sy,sx,sy+10);
-      sg.addColorStop(0,'rgba(0,0,0,0.35)');sg.addColorStop(1,'rgba(0,0,0,0)');
-      ctx.fillStyle=sg;ctx.fillRect(sx,sy,TILE_SIZE,10);
-    }
+    ctx.drawImage(TileArt.floorAt(x,y),sx,sy);
+    this._renderFloorAO(ctx,x,y,sx,sy);
   },
 
-  _renderTrapTile(ctx,sx,sy,visible){
+  _renderTrapTile(ctx,x,y,sx,sy,visible){
     const cx=sx+TILE_SIZE/2,cy=sy+TILE_SIZE/2;
+    this._renderFloorTile(ctx,x,y,sx,sy);
     // stone pressure plate, distinct from plain floor
-    ctx.fillStyle='#241a14';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
+    ctx.fillStyle='rgba(20,13,9,0.85)';ctx.fillRect(sx+2,sy+2,TILE_SIZE-4,TILE_SIZE-4);
     ctx.strokeStyle='rgba(0,0,0,0.55)';ctx.lineWidth=1;
     ctx.strokeRect(sx+3.5,sy+3.5,TILE_SIZE-7,TILE_SIZE-7);
     ctx.fillStyle='#3a2c20';
@@ -117,94 +113,68 @@ Object.assign(Game, {
     ctx.globalAlpha=1;
   },
 
-  _renderChestTile(ctx,sx,sy,alpha){
-    ctx.fillStyle='#1a1510';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
-    ctx.font='22px serif';ctx.textAlign='center';
-    ctx.fillStyle='#fff';ctx.fillText('📦',sx+TILE_SIZE/2,sy+TILE_SIZE*.8);
-    ctx.globalAlpha=Math.abs(Math.sin(this.animTime*3))*.5;
-    ctx.fillStyle='#ff0';ctx.beginPath();ctx.arc(sx+TILE_SIZE/2+Math.sin(this.animTime*4)*6,sy+6,2,0,Math.PI*2);ctx.fill();
+  // shared look for "special spot" tiles: real floor + rune ring + glowing glyph
+  _renderSpecialSpotTile(ctx,x,y,sx,sy,alpha,opts){
+    this._renderFloorTile(ctx,x,y,sx,sy);
+    const cx=sx+TILE_SIZE/2,cy=sy+TILE_SIZE/2;
+    const pulse=.5+Math.sin(this.animTime*(opts.pulseSpeed||2.6)+x*1.7)*.5;
+    // soft colored glow
+    ctx.globalAlpha=(.10+pulse*.16)*alpha;
+    ctx.fillStyle=opts.color;
+    ctx.beginPath();ctx.arc(cx,cy,TILE_SIZE*.52,0,Math.PI*2);ctx.fill();
+    // rotating rune ring
+    ctx.globalAlpha=(.35+pulse*.35)*alpha;
+    ctx.strokeStyle=opts.color;ctx.lineWidth=1.2;
+    ctx.setLineDash([4,5]);
+    ctx.save();
+    ctx.translate(cx,cy);ctx.rotate(this.animTime*(opts.spin||.6));
+    ctx.beginPath();ctx.arc(0,0,TILE_SIZE*.42,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+    ctx.setLineDash([]);
+    ctx.globalAlpha=alpha;
+    const bob=Math.sin(this.animTime*2.2+x)*1.4;
+    SpriteCache.draw(ctx,opts.icon,20,cx,cy+bob-1,opts.glyphColor||'#fff');
+  },
+
+  _renderChestTile(ctx,x,y,sx,sy,alpha){
+    this._renderFloorTile(ctx,x,y,sx,sy);
+    const cx=sx+TILE_SIZE/2;
+    ctx.globalAlpha=.3*alpha;ctx.fillStyle='#000';
+    ctx.beginPath();ctx.ellipse(cx,sy+TILE_SIZE-6,8,2.6,0,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=alpha;
+    SpriteCache.draw(ctx,'📦',20,cx,sy+TILE_SIZE*.52);
+    // wandering sparkle
+    ctx.globalAlpha=Math.abs(Math.sin(this.animTime*3+x))*.6*alpha;
+    ctx.fillStyle='#ffe27a';
+    ctx.beginPath();ctx.arc(cx+Math.sin(this.animTime*4+y)*7,sy+8,1.6,0,Math.PI*2);ctx.fill();
     ctx.globalAlpha=alpha;
   },
 
-  _renderShrineTile(ctx,sx,sy,alpha){
-    ctx.fillStyle='#1a1520';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
-    ctx.font='22px serif';ctx.textAlign='center';
-    ctx.fillStyle='#fff';ctx.fillText('⛩️',sx+TILE_SIZE/2,sy+TILE_SIZE*.8);
-    ctx.globalAlpha=Math.abs(Math.sin(this.animTime*2))*.3;
-    ctx.fillStyle='#4af';ctx.beginPath();ctx.arc(sx+TILE_SIZE/2,sy+TILE_SIZE/2,TILE_SIZE*.5,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=alpha;
-  },
-
-  _renderShopTile(ctx,sx,sy,alpha){
-    ctx.fillStyle='#1a1815';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
-    ctx.font='22px serif';ctx.textAlign='center';
-    ctx.fillStyle='#fff';ctx.fillText('🏪',sx+TILE_SIZE/2,sy+TILE_SIZE*.8);
-    ctx.globalAlpha=.2+Math.abs(Math.sin(this.animTime*2.5))*.2;
-    ctx.fillStyle='#f80';ctx.beginPath();ctx.arc(sx+TILE_SIZE/2,sy+TILE_SIZE/2,TILE_SIZE*.5,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=alpha;
-  },
-
-  _renderEventTile(ctx,sx,sy,alpha){
-    ctx.fillStyle='#141a1f';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
-    ctx.font='22px serif';ctx.textAlign='center';
-    ctx.fillStyle='#fff';ctx.fillText('🜂',sx+TILE_SIZE/2,sy+TILE_SIZE*.78);
-    ctx.globalAlpha=.18+Math.abs(Math.sin(this.animTime*3.2))*.22;
-    ctx.fillStyle='#6cf';ctx.beginPath();ctx.arc(sx+TILE_SIZE/2,sy+TILE_SIZE/2,TILE_SIZE*.5,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=alpha;
-  },
-
-  _renderWellTile(ctx,sx,sy,alpha){
-    ctx.fillStyle='#161423';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
-    ctx.font='22px serif';ctx.textAlign='center';
-    ctx.fillStyle='#fff';ctx.fillText('🕳️',sx+TILE_SIZE/2,sy+TILE_SIZE*.78);
-    ctx.globalAlpha=.16+Math.abs(Math.sin(this.animTime*2.7))*.2;
-    ctx.fillStyle='#b58cff';ctx.beginPath();ctx.arc(sx+TILE_SIZE/2,sy+TILE_SIZE/2,TILE_SIZE*.46,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=alpha;
-  },
-
-  _renderRiftTile(ctx,sx,sy,alpha){
-    ctx.fillStyle='#121027';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
-    ctx.font='22px serif';ctx.textAlign='center';
-    ctx.fillStyle='#fff';ctx.fillText('🌀',sx+TILE_SIZE/2,sy+TILE_SIZE*.78);
-    ctx.globalAlpha=.2+Math.abs(Math.sin(this.animTime*3.4))*.2;
-    ctx.fillStyle='#7a5bff';ctx.beginPath();ctx.arc(sx+TILE_SIZE/2,sy+TILE_SIZE/2,TILE_SIZE*.48,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=alpha;
-  },
-
-  _renderObeliskTile(ctx,sx,sy,alpha){
-    ctx.fillStyle='#111726';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
-    ctx.font='22px serif';ctx.textAlign='center';
-    ctx.fillStyle='#fff';ctx.fillText('🗿',sx+TILE_SIZE/2,sy+TILE_SIZE*.78);
-    ctx.globalAlpha=.18+Math.abs(Math.sin(this.animTime*2.8))*.22;
-    ctx.fillStyle='#6f93ff';ctx.beginPath();ctx.arc(sx+TILE_SIZE/2,sy+TILE_SIZE/2,TILE_SIZE*.46,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=alpha;
-  },
-
-  _renderInteractiveTile(ctx,tile,sx,sy,alpha,visible){
+  _renderInteractiveTile(ctx,tile,x,y,sx,sy,alpha,visible){
     switch(tile){
       case TILE.TRAP:
-        this._renderTrapTile(ctx,sx,sy,visible);
+        this._renderTrapTile(ctx,x,y,sx,sy,visible);
         return true;
       case TILE.CHEST:
-        this._renderChestTile(ctx,sx,sy,alpha);
+        this._renderChestTile(ctx,x,y,sx,sy,alpha);
         return true;
       case TILE.SHRINE:
-        this._renderShrineTile(ctx,sx,sy,alpha);
+        this._renderSpecialSpotTile(ctx,x,y,sx,sy,alpha,{icon:'⛩️',color:'#4af',pulseSpeed:2});
         return true;
       case TILE.SHOP:
-        this._renderShopTile(ctx,sx,sy,alpha);
+        this._renderSpecialSpotTile(ctx,x,y,sx,sy,alpha,{icon:'🏪',color:'#f80',pulseSpeed:2.4,spin:.4});
         return true;
       case TILE.EVENT:
-        this._renderEventTile(ctx,sx,sy,alpha);
+        this._renderSpecialSpotTile(ctx,x,y,sx,sy,alpha,{icon:'🜂',color:'#6cf',pulseSpeed:3.2,glyphColor:'#bfe6ff'});
         return true;
       case TILE.WELL:
-        this._renderWellTile(ctx,sx,sy,alpha);
+        this._renderSpecialSpotTile(ctx,x,y,sx,sy,alpha,{icon:'🕳️',color:'#b58cff',pulseSpeed:2.7});
         return true;
       case TILE.RIFT:
-        this._renderRiftTile(ctx,sx,sy,alpha);
+        this._renderSpecialSpotTile(ctx,x,y,sx,sy,alpha,{icon:'🌀',color:'#7a5bff',pulseSpeed:3.4,spin:1.4});
         return true;
       case TILE.OBELISK:
-        this._renderObeliskTile(ctx,sx,sy,alpha);
+        this._renderSpecialSpotTile(ctx,x,y,sx,sy,alpha,{icon:'🗿',color:'#6f93ff',pulseSpeed:2.8,spin:.3});
         return true;
       default:
         return false;
@@ -212,30 +182,54 @@ Object.assign(Game, {
   },
 
   _renderDoorTile(ctx,sx,sy){
-    ctx.fillStyle='#543';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
-    ctx.fillStyle='#876';ctx.fillRect(sx+1,sy,TILE_SIZE-2,3);ctx.fillRect(sx+1,sy+TILE_SIZE-3,TILE_SIZE-2,3);
+    // stone arch frame
+    ctx.fillStyle='#2c241a';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
+    ctx.fillStyle='#46392a';
     ctx.fillRect(sx,sy,3,TILE_SIZE);ctx.fillRect(sx+TILE_SIZE-3,sy,3,TILE_SIZE);
-    ctx.fillStyle='#a86';ctx.fillRect(sx+4,sy+4,TILE_SIZE-8,TILE_SIZE-8);
-    ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(sx+4,sy+TILE_SIZE/2);ctx.lineTo(sx+TILE_SIZE-4,sy+TILE_SIZE/2);ctx.stroke();
-    ctx.fillStyle='#fe8';ctx.beginPath();ctx.arc(sx+TILE_SIZE*.72,sy+TILE_SIZE*.5,2.5,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle='rgba(255,220,100,0.3)';ctx.beginPath();ctx.arc(sx+TILE_SIZE*.72,sy+TILE_SIZE*.5,4,0,Math.PI*2);ctx.stroke();
+    ctx.fillRect(sx,sy,TILE_SIZE,3);
+    // wooden planks
+    const px=sx+4,pw=TILE_SIZE-8;
+    const plankGrad=ctx.createLinearGradient(sx,sy,sx,sy+TILE_SIZE);
+    plankGrad.addColorStop(0,'#8a6a44');plankGrad.addColorStop(1,'#5e4527');
+    ctx.fillStyle=plankGrad;ctx.fillRect(px,sy+3,pw,TILE_SIZE-6);
+    ctx.strokeStyle='rgba(40,26,12,0.7)';ctx.lineWidth=1;
+    for(let i=1;i<4;i++){
+      ctx.beginPath();ctx.moveTo(px+i*pw/4,sy+3);ctx.lineTo(px+i*pw/4,sy+TILE_SIZE-3);ctx.stroke();
+    }
+    // iron bands + rivets
+    ctx.fillStyle='#3b3b42';
+    ctx.fillRect(px,sy+7,pw,3);ctx.fillRect(px,sy+TILE_SIZE-11,pw,3);
+    ctx.fillStyle='#6a6a74';
+    for(const bx of[px+2,px+pw/2-1,px+pw-4]){
+      ctx.fillRect(bx,sy+7.5,2,2);ctx.fillRect(bx,sy+TILE_SIZE-10.5,2,2);
+    }
+    // handle ring
+    ctx.strokeStyle='#d8b15e';ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.arc(sx+TILE_SIZE*.7,sy+TILE_SIZE*.52,3.2,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle='#f2cd7c';
+    ctx.beginPath();ctx.arc(sx+TILE_SIZE*.7,sy+TILE_SIZE*.43,1.2,0,Math.PI*2);ctx.fill();
   },
 
-  _renderStairsDownTile(ctx,sx,sy,alpha){
-    ctx.fillStyle='#181820';ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
-    ctx.strokeStyle='rgba(68,170,255,0.2)';ctx.lineWidth=1;
-    for(let s=0;s<3;s++){
-      const r=6+s*5;const a2=this.animTime*.8+s*2;
-      ctx.beginPath();ctx.arc(sx+TILE_SIZE/2,sy+TILE_SIZE/2,r,a2,a2+Math.PI);ctx.stroke();
+  _renderStairsDownTile(ctx,x,y,sx,sy,alpha){
+    this._renderFloorTile(ctx,x,y,sx,sy);
+    // descending steps into darkness
+    const steps=4;
+    for(let s=0;s<steps;s++){
+      const inset=3+s*3.5;
+      const shade=.35+s*.18;
+      ctx.fillStyle=`rgba(0,0,0,${shade})`;
+      ctx.fillRect(sx+inset,sy+inset,TILE_SIZE-inset*2,TILE_SIZE-inset*2);
+      ctx.fillStyle='rgba(255,255,255,0.05)';
+      ctx.fillRect(sx+inset,sy+inset,TILE_SIZE-inset*2,1);
     }
-    const stGlow=.15+Math.sin(this.animTime*2.5)*.15;
-    const stGrad=ctx.createRadialGradient(sx+TILE_SIZE/2,sy+TILE_SIZE/2,0,sx+TILE_SIZE/2,sy+TILE_SIZE/2,TILE_SIZE*.7);
+    // cool glow seeping up
+    const stGlow=.14+Math.sin(this.animTime*2.5)*.12;
+    const cx=sx+TILE_SIZE/2,cyy=sy+TILE_SIZE/2;
+    const stGrad=ctx.createRadialGradient(cx,cyy,0,cx,cyy,TILE_SIZE*.7);
     stGrad.addColorStop(0,`rgba(68,170,255,${stGlow})`);stGrad.addColorStop(1,'rgba(68,170,255,0)');
     ctx.fillStyle=stGrad;ctx.fillRect(sx-4,sy-4,TILE_SIZE+8,TILE_SIZE+8);
-    ctx.fillStyle='#4af';ctx.font='20px serif';ctx.textAlign='center';
     const stBob=Math.sin(this.animTime*3)*2;
-    ctx.fillText('⬇',sx+TILE_SIZE/2,sy+TILE_SIZE*.75+stBob);
+    SpriteCache.draw(ctx,'⬇',16,cx,cyy+stBob,'#8fc8ff');
     ctx.globalAlpha=alpha;
   },
 
@@ -243,6 +237,16 @@ Object.assign(Game, {
     const wPhase=this.animTime*1.5;
     const waterBase=Util.hsl(210,55,22);
     ctx.fillStyle=waterBase;ctx.fillRect(sx,sy,TILE_SIZE,TILE_SIZE);
+    // foam line where water meets land
+    {
+      const m=this.dungeon.map;
+      ctx.strokeStyle=`rgba(170,220,255,${.22+Math.sin(wPhase*2+x+y)*.08})`;
+      ctx.lineWidth=1.2;
+      if(y>0&&m[y-1][x]!==TILE.WATER){ctx.beginPath();ctx.moveTo(sx+1,sy+1);ctx.lineTo(sx+TILE_SIZE-1,sy+1);ctx.stroke();}
+      if(y<MAP_H-1&&m[y+1][x]!==TILE.WATER){ctx.beginPath();ctx.moveTo(sx+1,sy+TILE_SIZE-1);ctx.lineTo(sx+TILE_SIZE-1,sy+TILE_SIZE-1);ctx.stroke();}
+      if(x>0&&m[y][x-1]!==TILE.WATER){ctx.beginPath();ctx.moveTo(sx+1,sy+1);ctx.lineTo(sx+1,sy+TILE_SIZE-1);ctx.stroke();}
+      if(x<MAP_W-1&&m[y][x+1]!==TILE.WATER){ctx.beginPath();ctx.moveTo(sx+TILE_SIZE-1,sy+1);ctx.lineTo(sx+TILE_SIZE-1,sy+TILE_SIZE-1);ctx.stroke();}
+    }
     ctx.strokeStyle='rgba(100,180,255,0.18)';ctx.lineWidth=1;
     for(let w=0;w<3;w++){
       const wy=sy+8+w*9+Math.sin(wPhase+x*.7+w*2)*3;
@@ -283,13 +287,54 @@ Object.assign(Game, {
       const ix=Math.floor(item.x),iy=Math.floor(item.y);
       if(!this.dungeon.visible[iy]?.[ix])continue;
       const sx=item.x*TILE_SIZE-cx;const sy=item.y*TILE_SIZE-cy;
+      const icx=sx+TILE_SIZE/2;
       const glowColor=ItemDB.rarityColors[item.rarity]||'#ccc';
-      ctx.globalAlpha=.2+Math.sin(this.animTime*3)*.1;
+      const pulse=.5+Math.sin(this.animTime*3+item.x*1.3)*.5;
+      // ground shadow
+      ctx.globalAlpha=.3;ctx.fillStyle='#000';
+      ctx.beginPath();ctx.ellipse(icx,sy+TILE_SIZE-7,7,2.4,0,0,Math.PI*2);ctx.fill();
+      // soft rarity glow + pulsing ring
+      ctx.globalAlpha=.10+pulse*.12;
       ctx.fillStyle=glowColor;
-      ctx.beginPath();ctx.arc(sx+TILE_SIZE/2,sy+TILE_SIZE/2,TILE_SIZE*.4,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(icx,sy+TILE_SIZE/2+1,TILE_SIZE*.36,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=.25+pulse*.3;
+      ctx.strokeStyle=glowColor;ctx.lineWidth=1.4;
+      ctx.beginPath();ctx.arc(icx,sy+TILE_SIZE/2+1,9+pulse*2.5,0,Math.PI*2);ctx.stroke();
       ctx.globalAlpha=1;
-      ctx.font='18px serif';ctx.textAlign='center';
-      ctx.fillText(item.icon,sx+TILE_SIZE/2,sy+TILE_SIZE*.75);
+      const bob=Math.sin(this.animTime*2.2+item.x*1.7)*1.6;
+      SpriteCache.draw(ctx,item.icon,18,icx,sy+TILE_SIZE/2+bob);
+    }
+  },
+
+  // standing braziers at room light sources — the world's light has a source now
+  _renderBraziers(ctx,cx,cy){
+    const m=this.dungeon.map;
+    for(const light of this.dungeon.lightSources){
+      const t=m[light.y]?.[light.x];
+      if(t!==TILE.FLOOR&&t!==TILE.CORRIDOR)continue;
+      if(!this.dungeon.visible[light.y]?.[light.x])continue;
+      const bx=light.x*TILE_SIZE-cx+TILE_SIZE/2;
+      const by=light.y*TILE_SIZE-cy+TILE_SIZE/2;
+      ctx.globalAlpha=.3;ctx.fillStyle='#000';
+      ctx.beginPath();ctx.ellipse(bx,by+10,6,2,0,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1;
+      // stem + bowl
+      ctx.fillStyle='#241b13';
+      ctx.fillRect(bx-1.5,by+1,3,9);
+      ctx.beginPath();ctx.moveTo(bx-6.5,by-1);ctx.lineTo(bx+6.5,by-1);ctx.lineTo(bx+4,by+3.5);ctx.lineTo(bx-4,by+3.5);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='#4a3826';ctx.lineWidth=1;ctx.stroke();
+      // layered flame with flicker
+      const fl=Math.sin(this.animTime*9+light.x*3.1)*1.5;
+      const sway=Math.sin(this.animTime*13+light.y*2.3);
+      ctx.globalAlpha=.85;
+      ctx.fillStyle='#ff7a1e';
+      ctx.beginPath();ctx.ellipse(bx+sway*.8,by-6+fl*.4,4,6.5+fl,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#ffc23e';
+      ctx.beginPath();ctx.ellipse(bx+sway*.5,by-5.5,2.6,4.2+fl*.7,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff3c4';
+      ctx.beginPath();ctx.ellipse(bx+sway*.3,by-4.6,1.2,2,0,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1;
+      if(Util.chance(.015))this.particles.fire(light.x+.5,light.y+.2);
     }
   },
 
@@ -327,11 +372,10 @@ Object.assign(Game, {
     const la=(e.attackAnim||0)>0?Math.sin((1-e.attackAnim/.18)*Math.PI)*7:0;
     const lx=la*(e.attackDX||0),ly=la*(e.attackDY||0);
     const breathe=1+Math.sin(this.animTime*3+e.x*2.1)*.05;
-    ctx.font=(e.isBoss?'28px':'22px')+' serif';ctx.textAlign='center';
     ctx.save();
-    ctx.translate(ecx+lx,sy+TILE_SIZE*.7+bob+ly);
+    ctx.translate(ecx+lx,sy+TILE_SIZE*.45+bob+ly);
     ctx.scale(2-breathe,breathe);
-    ctx.fillText(e.icon,0,0);
+    SpriteCache.draw(ctx,e.icon,e.isBoss?28:22,0,0);
     ctx.restore();
   },
 
@@ -489,8 +533,9 @@ Object.assign(Game, {
     const pIcon=p.class==='warrior'?'⚔️':p.class==='mage'?'🔮':p.class==='necromancer'?'💀':'🗡️';
     const pBob=Math.sin(this.animTime*3.5)*1.5;
     const breathe=1+Math.sin(this.animTime*3.5)*.06;
-    ctx.font='18px serif';ctx.textAlign='center';
-    ctx.save();ctx.translate(pcx,pcy+5+pBob);ctx.scale(2-breathe,breathe);ctx.fillText(pIcon,0,0);ctx.restore();
+    ctx.save();ctx.translate(pcx,pcy-1+pBob);ctx.scale(2-breathe,breathe);
+    SpriteCache.draw(ctx,pIcon,18,0,0);
+    ctx.restore();
 
     ctx.restore();
   },
@@ -642,7 +687,7 @@ Object.assign(Game, {
         this._renderDoorTile(ctx,sx,sy);
         break;
       case TILE.STAIRS_DOWN: {
-        this._renderStairsDownTile(ctx,sx,sy,alpha);
+        this._renderStairsDownTile(ctx,x,y,sx,sy,alpha);
         break;
       }
       case TILE.WATER: {
@@ -661,7 +706,7 @@ Object.assign(Game, {
       case TILE.WELL:
       case TILE.RIFT:
       case TILE.OBELISK:
-        this._renderInteractiveTile(ctx,tile,sx,sy,alpha,visible);
+        this._renderInteractiveTile(ctx,tile,x,y,sx,sy,alpha,visible);
         break;
     }
   },
@@ -677,6 +722,7 @@ Object.assign(Game, {
 
   _drawVisibleTiles(frame){
     const {ctx,cx,cy,startTX,startTY,endTX,endTY,bloodStainSet}=frame;
+    TileArt.build(this.floorTheme||FloorThemes.themes[0]);
     for(let y=startTY;y<endTY;y++){
       for(let x=startTX;x<endTX;x++){
         const sx=x*TILE_SIZE-cx;const sy=y*TILE_SIZE-cy;
@@ -701,6 +747,7 @@ Object.assign(Game, {
   },
 
   _renderSceneActors(ctx,cx,cy){
+    this._renderBraziers(ctx,cx,cy);
     this._renderFloorItems(ctx,cx,cy);
     this._renderEnemies(ctx,cx,cy);
     this._renderMinions(ctx,cx,cy);

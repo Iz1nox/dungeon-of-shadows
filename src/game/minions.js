@@ -191,8 +191,7 @@ Object.assign(Game, {
       ctx.beginPath();ctx.arc(mcx,mcy,TILE_SIZE*.38,0,Math.PI*2);ctx.fill();
       ctx.globalAlpha=fade;
       const bob=Math.sin(this.animTime*4+m.x*2)*1.5;
-      ctx.font='15px serif';ctx.textAlign='center';
-      ctx.fillText(m.icon,mcx,sy+TILE_SIZE*.62+bob);
+      SpriteCache.draw(ctx,m.icon,15,mcx,sy+TILE_SIZE*.45+bob);
       ctx.globalAlpha=1;
     }
   },

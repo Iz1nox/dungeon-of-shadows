@@ -8,6 +8,7 @@
 </head>
 <body>
 <div id="title-screen">
+<div class="title-embers" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
 <h1>DUNGEON OF SHADOWS</h1>
 <div class="subtitle">Zaawansowany Roguelike — Proceduralnie Generowane Lochy</div>
 <div style="color:#a87cd8;font-size:13px;margin-bottom:14px">✦ Aktualizacja 2.0 „Echa Otchłani": Nekromanta, nieskończona Otchłań, zwoje, nowi wrogowie ✦</div>
@@ -16,10 +17,12 @@ WASD / Strzałki — Ruch | Myszka — Celowanie | LPM — Atak | PPM / Shift+LP
 1-5 — Zaklęcia | I — Ekwipunek | E — Podnoszenie | Spacja — Czekaj | F — Interakcja / Sklep | Tab — Mapa<br>
 Esc — Ustawienia / Zapisz / Wczytaj | <span id="title-debug-key">F3</span> — Panel debug | Złoto zbierane automatycznie
 </div>
-<button onclick="Game.start('warrior')">⚔️ Wojownik</button>
-<button onclick="Game.start('mage')">🔮 Mag</button>
-<button onclick="Game.start('rogue')">🗡️ Łotrzyk</button>
-<button onclick="Game.start('necromancer')">💀 Nekromanta</button>
+<div class="class-cards">
+<button class="class-card" onclick="Game.start('warrior')"><span class="cc-icon">⚔️</span><span class="cc-name">Wojownik</span><span class="cc-desc">Stal, tarcza i szał bitewny</span><span class="cc-stats">❤️ 120 &nbsp; 🔮 40 &nbsp; ⚔ 12</span></button>
+<button class="class-card" onclick="Game.start('mage')"><span class="cc-icon">🔮</span><span class="cc-name">Mag</span><span class="cc-desc">Żywioły, promienie i teleportacja</span><span class="cc-stats">❤️ 70 &nbsp; 🔮 100 &nbsp; ⚔ 6</span></button>
+<button class="class-card" onclick="Game.start('rogue')"><span class="cc-icon">🗡️</span><span class="cc-name">Łotrzyk</span><span class="cc-desc">Cień, krytyki i szybkość</span><span class="cc-stats">❤️ 85 &nbsp; 🔮 60 &nbsp; ⚔ 10</span></button>
+<button class="class-card" onclick="Game.start('necromancer')"><span class="cc-icon">💀</span><span class="cc-name">Nekromanta</span><span class="cc-desc">Sługi, zwłoki i mroczne pakty</span><span class="cc-stats">❤️ 80 &nbsp; 🔮 90 &nbsp; ⚔ 7</span></button>
+</div>
 <div style="margin-top:20px">
 <button onclick="Game.loadFromTitle()" style="padding:10px 30px;font-size:15px">📂 Wczytaj zapis</button>
 <button onclick="Game.openMeta()" style="padding:10px 30px;font-size:15px">🔮 Sanktuarium Dusz</button>
@@ -99,6 +102,7 @@ Esc — Ustawienia / Zapisz / Wczytaj | <span id="title-debug-key">F3</span> —
 <script src="src/shop.js"></script>
 <script src="src/affixes.js"></script>
 <script src="src/themes.js"></script>
+<script src="src/render-assets.js"></script>
 <script src="src/achievements.js"></script>
 <script src="src/registry.js"></script>
 <script src="src/projectile.js"></script>
