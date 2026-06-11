@@ -70,15 +70,59 @@ Object.assign(Game, {
 
   _renderFloorAO(ctx,x,y,sx,sy){
     const m=this.dungeon.map;
-    if(y>0&&this._isSolidTile(m[y-1][x]))ctx.drawImage(TileArt.aoN,sx,sy);
-    if(y<MAP_H-1&&this._isSolidTile(m[y+1][x]))ctx.drawImage(TileArt.aoS,sx,sy);
-    if(x>0&&this._isSolidTile(m[y][x-1]))ctx.drawImage(TileArt.aoW,sx,sy);
-    if(x<MAP_W-1&&this._isSolidTile(m[y][x+1]))ctx.drawImage(TileArt.aoE,sx,sy);
+    const N=y>0&&this._isSolidTile(m[y-1][x]);
+    const S=y<MAP_H-1&&this._isSolidTile(m[y+1][x]);
+    const W=x>0&&this._isSolidTile(m[y][x-1]);
+    const E=x<MAP_W-1&&this._isSolidTile(m[y][x+1]);
+    if(N)ctx.drawImage(TileArt.aoN,sx,sy);
+    if(S)ctx.drawImage(TileArt.aoS,sx,sy);
+    if(W)ctx.drawImage(TileArt.aoW,sx,sy);
+    if(E)ctx.drawImage(TileArt.aoE,sx,sy);
+    // diagonal corners only when the orthogonal sides are open
+    if(!N&&!W&&y>0&&x>0&&this._isSolidTile(m[y-1][x-1]))ctx.drawImage(TileArt.aoNW,sx,sy);
+    if(!N&&!E&&y>0&&x<MAP_W-1&&this._isSolidTile(m[y-1][x+1]))ctx.drawImage(TileArt.aoNE,sx,sy);
+    if(!S&&!W&&y<MAP_H-1&&x>0&&this._isSolidTile(m[y+1][x-1]))ctx.drawImage(TileArt.aoSW,sx,sy);
+    if(!S&&!E&&y<MAP_H-1&&x<MAP_W-1&&this._isSolidTile(m[y+1][x+1]))ctx.drawImage(TileArt.aoSE,sx,sy);
+  },
+
+  _renderFloorDecor(ctx,x,y,sx,sy){
+    if(!TileArt.decals.length)return;
+    const h=TileArt.hash(x*3+11,y*5+7);
+    if(h%13!==0)return;
+    const d=TileArt.decals[h%TileArt.decals.length];
+    const ox=((h>>3)%7)-3,oy=((h>>5)%7)-3;
+    ctx.drawImage(d,sx+(TILE_SIZE-d.width)/2+ox,sy+(TILE_SIZE-d.height)/2+oy);
+  },
+
+  _renderCobweb(ctx,x,y,sx,sy){
+    if(!TileArt.cobwebNW)return;
+    const m=this.dungeon.map;
+    const N=y>0&&this._isSolidTile(m[y-1][x]);
+    if(!N)return;
+    const h=TileArt.hash(x+13,y+29);
+    if(h%6===0&&x>0&&this._isSolidTile(m[y][x-1])){
+      ctx.drawImage(TileArt.cobwebNW,sx,sy);
+    }else if(h%6===1&&x<MAP_W-1&&this._isSolidTile(m[y][x+1])){
+      ctx.drawImage(TileArt.cobwebNE,sx+TILE_SIZE-TileArt.cobwebNE.width,sy);
+    }
   },
 
   _renderFloorTile(ctx,x,y,sx,sy){
-    ctx.drawImage(TileArt.floorAt(x,y),sx,sy);
+    const isCorridor=this.dungeon.map[y][x]===TILE.CORRIDOR;
+    ctx.drawImage(isCorridor?TileArt.corridorAt(x,y):TileArt.floorAt(x,y),sx,sy);
+    if(!isCorridor){
+      const glow=TileArt.floorGlowAt(x,y);
+      if(glow){
+        // pulsujące żyły żaru / pustki
+        const prev=ctx.globalAlpha;
+        ctx.globalAlpha=prev*(.45+Math.sin(this.animTime*2.1+x*1.3+y*.7)*.3);
+        ctx.drawImage(glow,sx,sy);
+        ctx.globalAlpha=prev;
+      }
+      this._renderFloorDecor(ctx,x,y,sx,sy);
+    }
     this._renderFloorAO(ctx,x,y,sx,sy);
+    this._renderCobweb(ctx,x,y,sx,sy);
   },
 
   _renderTrapTile(ctx,x,y,sx,sy,visible){
