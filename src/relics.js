@@ -83,8 +83,11 @@ const PROGRESSION_BALANCE = {
 const ENCOUNTER_BALANCE = {
   baseEnemyCount:10,
   enemyCountPerFloor:2.6,
-  bossHpScalePerFloor:0.17,
+  enemyScalePerFloor:0.14,
+  bossHpScalePerFloor:0.32,
   bossAtkScalePerFloor:0.13,
+  bossDamageTakenMult:0.75,   // bossowie przyjmują 75% obrażeń
+  bossCcDurationMult:0.25,    // ogłuszenia/zamrożenia działają na bossów 4x krócej
 };
 
 const TILE = {VOID:0,WALL:1,FLOOR:2,CORRIDOR:3,DOOR:4,STAIRS_DOWN:5,STAIRS_UP:6,WATER:7,LAVA:8,TRAP:9,CHEST:10,SHRINE:11,SHOP:12,EVENT:13,WELL:14,RIFT:15,OBELISK:16,SECRET_WALL:17};

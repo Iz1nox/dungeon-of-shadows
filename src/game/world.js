@@ -218,7 +218,7 @@ Object.assign(Game, {
   },
   
   _makeEnemy(data,x,y){
-    const scale=1+this.floor*0.12;
+    const scale=1+this.floor*(ENCOUNTER_BALANCE.enemyScalePerFloor||0.12);
     return{
       ...data,x,y,maxHp:Math.floor(data.hp*scale),hp:Math.floor(data.hp*scale),
       atk:Math.floor(data.atk*scale),def:Math.floor((data.def||0)*scale),

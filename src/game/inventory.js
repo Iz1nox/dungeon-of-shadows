@@ -301,7 +301,7 @@ Object.assign(Game, {
         if(e.hp<=0)continue;
         const ex=Math.floor(e.x),ey=Math.floor(e.y);
         if(!this.dungeon.visible[ey]?.[ex])continue;
-        e.freezeTimer=Math.max(e.freezeTimer||0,item.duration||3.5);
+        this._freezeEnemy(e,item.duration||3.5);
         this.particles.burst(e.x+.5,e.y+.5,6,'#d8f0ff',1.6,.3,2.4);
         frozen++;
       }

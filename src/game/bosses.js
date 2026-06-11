@@ -200,10 +200,18 @@ Object.assign(Game, {
       this.screenFX.shake(8,.4);
       this.screenFX.flash('#f00',.3);
     }
-    
+    // Phase 3: fury — abilities come much faster
+    if(boss.hp<boss.maxHp*.25&&boss.phase===2){
+      boss.phase=3;boss.atk=Math.floor(boss.atk*1.1);
+      this.log(`☠️ ${boss.name} wpada w furię! Uciekaj albo dobij!`,'boss');
+      this.screenFX.shake(10,.5);
+      this.screenFX.flash('#f40',.3);
+      this.sound.boss();
+    }
+
     if(boss.abilityTimer<=0&&boss.abilities.length>0){
       const ability=Util.pick(boss.abilities);
-      boss.abilityTimer=3+Math.random()*2;
+      boss.abilityTimer=boss.phase>=3?1.6+Math.random()*1.2:3+Math.random()*2;
 
       this._triggerBossAbility(boss,ability,dist);
     }

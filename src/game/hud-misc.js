@@ -81,7 +81,7 @@ Object.assign(Game, {
     const cd=document.getElementById('combo-display');
     const p=this.player;
     if(p.combo>=2){
-      const mult=p.combo>=10?3:p.combo>=7?2.5:p.combo>=5?2:p.combo>=3?1.5:1;
+      const mult=p.combo>=10?2.2:p.combo>=7?1.9:p.combo>=5?1.6:p.combo>=3?1.3:1;
       cd.innerHTML=`⚡ COMBO x${p.combo}<br><span class="combo-mult">${mult>1?mult+'x DMG':''}</span>`;
       cd.classList.add('active');
       cd.style.fontSize=Math.min(28+p.combo*2,50)+'px';

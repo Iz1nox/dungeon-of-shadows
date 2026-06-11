@@ -3,14 +3,19 @@ Object.assign(Game, {
   _resolvePlayerProjectileHits(proj){
     for(const e of this.enemies){
       if(e.hp<=0)continue;
-      if(Util.dist(proj.x,proj.y,e.x+.5,e.y+.5)<.6){
-        this._rangedHits=(this._rangedHits||0)+1;
-        if(proj.sourceTag==='fireball')this._fireballHits=(this._fireballHits||0)+1;
-        this.damageEnemy(e,proj.damage,proj.element);
-        if(!proj.piercing)proj.alive=false;
-        this.particles.burst(proj.x,proj.y,8,proj.color,2,.3);
-        break;
+      if(Util.dist(proj.x,proj.y,e.x+.5,e.y+.5)>=.6)continue;
+      if(proj.piercing){
+        // a piercing bolt wounds each enemy once — it used to re-hit
+        // the same target every frame while passing through
+        if(!proj.hitIds)proj.hitIds=new Set();
+        if(proj.hitIds.has(e.id))continue;
+        proj.hitIds.add(e.id);
       }
+      this._rangedHits=(this._rangedHits||0)+1;
+      if(proj.sourceTag==='fireball')this._fireballHits=(this._fireballHits||0)+1;
+      this.damageEnemy(e,proj.damage,proj.element);
+      this.particles.burst(proj.x,proj.y,8,proj.color,2,.3);
+      if(!proj.piercing){proj.alive=false;break;}
     }
   },
 
@@ -108,10 +113,11 @@ Object.assign(Game, {
         const weapon=p.equipment.weapon;
         if(weapon){
           dmg+=weapon.baseAtk;
-          if(weapon.effect==='freeze')e.freezeTimer=2;
+          if(weapon.effect==='freeze')this._freezeEnemy(e,2);
           if(weapon.effect==='burn')e.burnTimer=3;
           if(weapon.effect==='lifesteal'){const heal=Math.floor(dmg*.2);p.hp=Math.min(p.maxHp,p.hp+heal);}
-          if(weapon.effect==='execute'&&e.hp<e.maxHp*.2)dmg=e.hp;
+          // egzekucja nie działa na bossów (u nich tylko +50% obrażeń)
+          if(weapon.effect==='execute'&&e.hp<e.maxHp*.2)dmg=e.isBoss?Math.floor(dmg*1.5):e.hp;
           if(weapon.effect==='reap'&&e.hp<e.maxHp*.3)dmg=Math.floor(dmg*1.5);
         }
 
@@ -119,7 +125,7 @@ Object.assign(Game, {
 
         // combo system with scaling multiplier
         p.combo++;p.comboTimer=2;
-        const comboMult=p.combo>=10?3:p.combo>=7?2.5:p.combo>=5?2:p.combo>=3?1.5:1;
+        const comboMult=p.combo>=10?2.2:p.combo>=7?1.9:p.combo>=5?1.6:p.combo>=3?1.3:1;
         if(comboMult>1){
           dmg=Math.floor(dmg*comboMult);
           this.floatingText.add(p.x+.5,p.y-1,`COMBO x${p.combo}! (${comboMult}x)`,'#ff0');
@@ -208,7 +214,7 @@ Object.assign(Game, {
 
   _specialAttackMage(){
     const p=this.player;
-    this.projectiles.push(new Projectile(p.x+.5,p.y+.5,this.mouseWorldX,this.mouseWorldY,6,p.atk*2+10,'#f0f',true,'arcane',true));
+    this.projectiles.push(new Projectile(p.x+.5,p.y+.5,this.mouseWorldX,this.mouseWorldY,6,Math.floor(p.atk*2.2)+12,'#f0f',true,'arcane',true));
     this.particles.magic(p.x+.5,p.y+.5,'#f0f');
     this.particles.burst(p.x+.5,p.y+.5,12,'#f0f',2.5,.45,2.8);
     this.screenFX.flash('#e88cff',.08);
@@ -253,7 +259,7 @@ Object.assign(Game, {
   _applyEnemyElementHitEffects(e,element){
     if(element==='fire'&&!e.burnTimer)e.burnTimer=3;
     if(element==='ice'){
-      e.freezeTimer=1.5;
+      this._freezeEnemy(e,1.5);
       this.particles.burst(e.x+.5,e.y+.5,6,'#d8f0ff',1.6,.28,2.6);
     }
     if(element==='poison')this.particles.burst(e.x+.5,e.y+.5,5,'#8cff8c',1.8,.35,2.2);
@@ -278,10 +284,22 @@ Object.assign(Game, {
     if(this.dungeon.isPassable(Math.floor(e.x),Math.floor(ny)))e.y=ny;
   },
 
+  // crowd control respects boss resistance (bosses shrug off most of it)
+  _stunEnemy(e,duration){
+    const d=e.isBoss?duration*(ENCOUNTER_BALANCE.bossCcDurationMult||.25):duration;
+    e.stunTimer=Math.max(e.stunTimer||0,d);
+  },
+
+  _freezeEnemy(e,duration){
+    const d=e.isBoss?duration*(ENCOUNTER_BALANCE.bossCcDurationMult||.25):duration;
+    e.freezeTimer=Math.max(e.freezeTimer||0,d);
+  },
+
   damageEnemy(e,dmg,element='',crit=false){
     const p=this.player;
     // talent: spell power
     if(p.talents&&p.talents.spellPower>0&&element)dmg=Math.floor(dmg*(1+p.talents.spellPower));
+    if(e.isBoss)dmg*=ENCOUNTER_BALANCE.bossDamageTakenMult||.75;
 
     dmg=Math.max(1,Math.floor(dmg));
 

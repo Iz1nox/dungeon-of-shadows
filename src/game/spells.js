@@ -97,7 +97,7 @@ Object.assign(Game, {
       if(Util.dist(p.x,p.y,e.x,e.y)<range+1){
         let dmg=spell.damage+Math.floor(p.atk*.5);
         this.damageEnemy(e,dmg,spell.element||'');
-        if(spell.name.includes('Tarcz'))e.stunTimer=2;
+        if(spell.name.includes('Tarcz'))this._stunEnemy(e,2);
         hits++;
       }
     }
@@ -157,7 +157,7 @@ Object.assign(Game, {
       this.damageEnemy(t,spell.damage+p.atk*.5);
       this.particles.lightning(prev.x,prev.y,t.x+.5,t.y+.5);
       this.floatingText.add(t.x+.5,t.y-.5,'⚡','#9fd8ff',.45);
-      t.stunTimer=.5;
+      this._stunEnemy(t,.5);
       prev={x:t.x+.5,y:t.y+.5};
       hits++;
     }
@@ -243,7 +243,7 @@ Object.assign(Game, {
       const cy=oy+ny*t;
       if(Util.dist(ex,ey,cx,cy)>width)continue;
       this.damageEnemy(e,baseDamage,'arcane');
-      e.stunTimer=Math.max(e.stunTimer||0,.3);
+      this._stunEnemy(e,.3);
       this.floatingText.add(ex,ey-.4,'🗿','#9cb6ff',.4);
       hits++;
     }
@@ -291,7 +291,7 @@ Object.assign(Game, {
       const cy=oy+ny*t;
       if(Util.dist(ex,ey,cx,cy)>width)continue;
       this.damageEnemy(e,baseDamage);
-      e.stunTimer=Math.max(e.stunTimer||0,.45);
+      this._stunEnemy(e,.45);
       this.floatingText.add(ex,ey-.4,'🪨','#d2b48c',.42);
       hits++;
     }
@@ -318,7 +318,7 @@ Object.assign(Game, {
       if(e.hp<=0)continue;
       if(Util.dist(p.x,p.y,e.x,e.y)>radius)continue;
       this.damageEnemy(e,pulseDamage,'arcane');
-      e.stunTimer=Math.max(e.stunTimer||0,.35);
+      this._stunEnemy(e,.35);
       this.floatingText.add(e.x+.5,e.y-.4,'🜔','#b794ff',.42);
       hits++;
     }
@@ -453,7 +453,7 @@ Object.assign(Game, {
       if(e.hp<=0)continue;
       if(Util.dist(p.x,p.y,e.x,e.y)>impactRadius)continue;
       this.damageEnemy(e,impactDamage,'arcane');
-      e.stunTimer=Math.max(e.stunTimer||0,.45);
+      this._stunEnemy(e,.45);
       this.floatingText.add(e.x+.5,e.y-.4,'🗿','#a4b8ff',.4);
       hits++;
     }

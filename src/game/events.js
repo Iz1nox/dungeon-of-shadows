@@ -244,18 +244,18 @@ Object.assign(Game, {
         this.particles.heal(p.x+.5,p.y+.5);
         this.log('✨ Kapliczka przywraca ci siły!','heal');
       }},
-      {label:'⚔️ Wzmocnij Broń (+3 ATK)',desc:'Kosztuje 50 złota',action:()=>{
-        if(p.gold<50){this.log('Za mało złota!','info');return false;}
+      {label:'⚔️ Wzmocnij Broń (+2 ATK)',desc:'Kosztuje 75 złota',action:()=>{
+        if(p.gold<75){this.log('Za mało złota!','info');return false;}
         if(!p.equipment.weapon){this.log('Brak broni!','info');return false;}
-        p.gold-=50;p.equipment.weapon.baseAtk+=3;
+        p.gold-=75;p.equipment.weapon.baseAtk+=2;
         p.equipment.weapon.name+=' +';
         this.particles.magic(p.x+.5,p.y+.5,'#f80');
-        this.log(`⚔ ${p.equipment.weapon.name} wzmocniona! (ATK +3)`,'item');
+        this.log(`⚔ ${p.equipment.weapon.name} wzmocniona! (ATK +2)`,'item');
       }},
-      {label:'🛡️ Wzmocnij Zbroję (+2 DEF)',desc:'Kosztuje 50 złota',action:()=>{
-        if(p.gold<50){this.log('Za mało złota!','info');return false;}
+      {label:'🛡️ Wzmocnij Zbroję (+2 DEF)',desc:'Kosztuje 75 złota',action:()=>{
+        if(p.gold<75){this.log('Za mało złota!','info');return false;}
         if(!p.equipment.armor){this.log('Brak zbroi!','info');return false;}
-        p.gold-=50;p.equipment.armor.baseDef+=2;
+        p.gold-=75;p.equipment.armor.baseDef+=2;
         p.equipment.armor.name+=' +';
         this.particles.magic(p.x+.5,p.y+.5,'#48f');
         this.log(`🛡 ${p.equipment.armor.name} wzmocniona! (DEF +2)`,'item');
