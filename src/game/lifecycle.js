@@ -4,6 +4,12 @@ Object.assign(Game, {
     if(this._hudEls)return;
     this._hudEls={
       name:document.getElementById('hud-name'),
+      portraitIcon:document.getElementById('hud-portrait-icon'),
+      level:document.getElementById('hud-level'),
+      hpGhost:document.getElementById('hp-ghost'),
+      hpWrap:document.getElementById('hp-bar-wrap'),
+      mapLabel:document.getElementById('minimap-label'),
+      lowHp:document.getElementById('low-hp-overlay'),
       hpBar:document.getElementById('hp-bar'),
       hpText:document.getElementById('hp-text'),
       mpBar:document.getElementById('mp-bar'),

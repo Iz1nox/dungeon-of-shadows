@@ -637,7 +637,18 @@ Object.assign(Game, {
     if(bossAlive){
       bossBar.style.display='block';
       document.getElementById('boss-name').textContent=`💀 ${bossAlive.name}`;
-      document.getElementById('boss-hp-fill').style.width=`${bossAlive.hp/bossAlive.maxHp*100}%`;
+      const pct=`${Math.max(0,bossAlive.hp/bossAlive.maxHp*100)}%`;
+      document.getElementById('boss-hp-fill').style.width=pct;
+      const ghost=document.getElementById('boss-ghost');
+      if(ghost)ghost.style.width=pct;
+      const phaseEl=document.getElementById('boss-phase');
+      if(phaseEl){
+        const label=bossAlive.phase>=3?'FURIA':bossAlive.phase===2?'SZAŁ':'';
+        if(phaseEl.textContent!==label){
+          phaseEl.textContent=label;
+          phaseEl.className=bossAlive.phase>=3?'ph3':bossAlive.phase===2?'ph2':'';
+        }
+      }
       return;
     }
     bossBar.style.display='none';

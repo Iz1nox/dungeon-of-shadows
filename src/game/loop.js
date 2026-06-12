@@ -3,14 +3,15 @@ Object.assign(Game, {
   initSpellBar(){
     const bar=document.getElementById('spell-bar');
     bar.innerHTML='';
-    for(const spell of this.player.spells){
+    this.player.spells.forEach((spell,i)=>{
       const slot=document.createElement('div');
       slot.className='spell-slot';
-      slot.innerHTML=`<span class="key">${spell.key}</span><span class="icon">${spell.icon}</span><span style="font-size:9px">${spell.name}</span>`;
+      const keyLabel=getKeyDisplay(KeyBindings['spell'+(i+1)]||spell.key);
+      slot.innerHTML=`<span class="key">${keyLabel}</span><span class="icon">${spell.icon}</span><span style="font-size:9px">${spell.name}</span>`;
       slot.title=`${spell.name}: ${spell.desc} (MP: ${spell.mpCost}, CD: ${spell.cd}s)`;
-      slot.addEventListener('click',()=>this.castSpell(parseInt(spell.key)-1));
+      slot.addEventListener('click',()=>this.castSpell(i));
       bar.appendChild(slot);
-    }
+    });
   },
 
   _updateFrameTiming(time){

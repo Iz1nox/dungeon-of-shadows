@@ -54,23 +54,27 @@ Esc — Ustawienia / Zapisz / Wczytaj | <span id="title-debug-key">F3</span> —
 
 <div id="ui-overlay">
 <div id="hud">
-<div style="font-size:16px;font-weight:bold;color:#f80" id="hud-name">Bohater Lv.1</div>
+<div class="hud-head">
+<div id="hud-portrait"><span id="hud-portrait-icon">⚔️</span><span id="hud-level">1</span></div>
+<div class="hud-title">
+<div id="hud-name">Bohater</div>
+<div id="hud-stats-line"><span id="hud-atk">⚔ 10</span><span id="hud-def">🛡 5</span><span id="hud-kills">💀 0</span></div>
+</div>
+</div>
 <div class="label">HP</div>
-<div class="bar"><div class="bar-fill hp-fill" id="hp-bar" style="width:100%"></div><div class="bar-text" id="hp-text">100/100</div></div>
+<div class="bar" id="hp-bar-wrap"><div class="bar-ghost" id="hp-ghost" style="width:100%"></div><div class="bar-fill hp-fill" id="hp-bar" style="width:100%"></div><div class="bar-text" id="hp-text">100/100</div></div>
 <div class="label">MP</div>
 <div class="bar"><div class="bar-fill mp-fill" id="mp-bar" style="width:100%"></div><div class="bar-text" id="mp-text">50/50</div></div>
 <div class="label">XP</div>
 <div class="bar"><div class="bar-fill xp-fill" id="xp-bar" style="width:0%"></div><div class="bar-text" id="xp-text">0/100</div></div>
-<div style="margin-top:6px;font-size:12px">
-<span id="hud-atk">⚔ ATK: 10</span> &nbsp; <span id="hud-def">🛡 DEF: 5</span><br>
-<span id="hud-gold" style="color:#ff0">💰 Złoto: 0</span> &nbsp; <span id="hud-floor" style="color:#aaa">📍 Piętro 1</span>
-<br><span id="hud-kills" style="color:#f88">💀 Zabici: 0</span>
+<div class="hud-bottom"><span id="hud-gold">💰 0</span><span id="hud-floor">📍 Piętro 1</span></div>
 </div>
-</div>
+<div id="low-hp-overlay"></div>
 <div id="debug-overlay"></div>
 <div id="buff-bar"></div>
 <canvas id="minimap" width="150" height="150"></canvas>
-<div id="boss-hp"><div class="name" id="boss-name"></div><div class="bar"><div class="fill" id="boss-hp-fill"></div></div></div>
+<div id="minimap-label">📍 Piętro 1</div>
+<div id="boss-hp"><div class="name"><span id="boss-name"></span><span id="boss-phase"></span></div><div class="bar"><div class="ghost" id="boss-ghost"></div><div class="fill" id="boss-hp-fill"></div><div class="tick t50"></div><div class="tick t25"></div></div></div>
 <div id="quickslots"></div>
 <div id="spell-bar"></div>
 <div id="message-log"></div>

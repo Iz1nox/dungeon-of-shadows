@@ -27,25 +27,35 @@ Object.assign(Game, {
   _buildHudSnapshot(player){
     const totalAtk=player.atk+(player.equipment.weapon?player.equipment.weapon.baseAtk:0);
     const totalDef=player.def+(player.equipment.armor?player.equipment.armor.baseDef:0)+this._getObeliskWardDefenseBonus();
+    const classIcons={warrior:'⚔️',mage:'🔮',rogue:'🗡️',necromancer:'💀'};
     return{
-      name:`${player.className} Lv.${player.level}`,
+      name:player.className,
+      portrait:classIcons[player.class]||'⚔️',
+      level:String(player.level),
+      mapLabel:this.endlessMode?`🕳️ Otchłań ${this.floor-MAX_FLOOR} — ${this.floorTheme?this.floorTheme.name:''}`:`📍 ${this.floor}/${MAX_FLOOR} — ${this.floorTheme?this.floorTheme.name:''}`,
       hpPct:Math.max(0,Math.min(100,Math.round(player.hp/player.maxHp*100))),
       hpText:`${Math.floor(player.hp)}/${player.maxHp}`,
       mpPct:Math.max(0,Math.min(100,Math.round(player.mp/player.maxMp*100))),
       mpText:`${Math.floor(player.mp)}/${player.maxMp}`,
       xpPct:Math.max(0,Math.min(100,Math.round(player.xp/player.xpToLevel*100))),
       xpText:`${player.xp}/${player.xpToLevel}`,
-      atk:`⚔ ATK: ${totalAtk}`,
-      def:`🛡 DEF: ${totalDef}`,
-      gold:`💰 Złoto: ${player.gold}`,
+      atk:`⚔ ${totalAtk}`,
+      def:`🛡 ${totalDef}`,
+      gold:`💰 ${player.gold}`,
       floor:this.endlessMode?`🕳️ Otchłań ${this.floor-MAX_FLOOR}`:`📍 Piętro ${this.floor}/${MAX_FLOOR}`,
-      kills:`💀 Zabici: ${this.totalKills}`
+      kills:`💀 ${this.totalKills}`
     };
   },
 
   _applyHudSnapshot(ui,prev,next){
     if(!prev||prev.name!==next.name)ui.name.textContent=next.name;
-    if(!prev||prev.hpPct!==next.hpPct)ui.hpBar.style.width=`${next.hpPct}%`;
+    if(ui.portraitIcon&&(!prev||prev.portrait!==next.portrait))ui.portraitIcon.textContent=next.portrait;
+    if(ui.level&&(!prev||prev.level!==next.level))ui.level.textContent=next.level;
+    if(ui.mapLabel&&(!prev||prev.mapLabel!==next.mapLabel))ui.mapLabel.textContent=next.mapLabel;
+    if(!prev||prev.hpPct!==next.hpPct){
+      ui.hpBar.style.width=`${next.hpPct}%`;
+      if(ui.hpGhost)ui.hpGhost.style.width=`${next.hpPct}%`;
+    }
     if(!prev||prev.hpText!==next.hpText)ui.hpText.textContent=next.hpText;
     if(!prev||prev.mpPct!==next.mpPct)ui.mpBar.style.width=`${next.mpPct}%`;
     if(!prev||prev.mpText!==next.mpText)ui.mpText.textContent=next.mpText;
@@ -82,6 +92,10 @@ Object.assign(Game, {
     const prev=this._hudCache;
     this._applyHudSnapshot(ui,prev,next);
     this._hudCache=next;
+    // niski poziom HP: pulsujący pasek + czerwona winieta
+    const lowHp=p.hp>0&&p.hp/p.maxHp<.25;
+    if(ui.hpWrap)ui.hpWrap.classList.toggle('low',lowHp);
+    if(ui.lowHp)ui.lowHp.classList.toggle('active',lowHp);
     this._updateHudDebugOverlay(ui);
     this._updateHudBuffBar(p,ui);
     

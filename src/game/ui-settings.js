@@ -17,6 +17,10 @@ Object.assign(Game, {
     const logEl=document.getElementById('message-log');
     this._appendLogMessage(logEl,msg,cls);
     this._trimLogMessages(logEl,50);
+    // log rozjaśnia się przy nowych wpisach i wygasza po chwili spokoju
+    logEl.classList.add('fresh');
+    clearTimeout(this._logFadeTimer);
+    this._logFadeTimer=setTimeout(()=>logEl.classList.remove('fresh'),5000);
   },
   
   // =============================================
@@ -149,6 +153,7 @@ Object.assign(Game, {
       btn.classList.remove('listening');
       btn.textContent=getKeyDisplay(newKey);
       this._refreshTitleDebugKeyHint();
+      if(this.player&&action.startsWith('spell'))this.initSpellBar();
       this._settingsListening=null;
       this._settingsListeningOld=null;
     };

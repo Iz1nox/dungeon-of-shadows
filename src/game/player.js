@@ -105,23 +105,34 @@ Object.assign(Game, {
 
   _applySpellSlotCooldownUi(slot,spell){
     if(spell.cdTimer>0){
+      spell._wasOnCd=true;
       slot.classList.add('on-cd');
-      let cdDiv=slot.querySelector('.cd-overlay');
-      if(!cdDiv){cdDiv=document.createElement('div');cdDiv.className='cd-overlay';slot.appendChild(cdDiv);}
-      cdDiv.textContent=spell.cdTimer.toFixed(1);
+      let cdDiv=slot.querySelector('.cd-radial');
+      if(!cdDiv){cdDiv=document.createElement('div');cdDiv.className='cd-radial';slot.appendChild(cdDiv);}
+      // radialny zegar: zaciemnienie schodzi "po tarczy" wraz z cooldownem
+      const frac=Math.max(0,Math.min(1,spell.cdTimer/(spell.cd||1)));
+      cdDiv.style.setProperty('--p',frac);
+      cdDiv.textContent=spell.cdTimer<10?spell.cdTimer.toFixed(1):String(Math.ceil(spell.cdTimer));
       return;
     }
     slot.classList.remove('on-cd');
-    const cdDiv=slot.querySelector('.cd-overlay');
+    const cdDiv=slot.querySelector('.cd-radial');
     if(cdDiv)cdDiv.remove();
+    if(spell._wasOnCd){
+      // błysk gotowości — zaklęcie wróciło do użycia
+      spell._wasOnCd=false;
+      slot.classList.add('ready-flash');
+      setTimeout(()=>slot.classList.remove('ready-flash'),460);
+    }
   },
-  
+
   updateSpellCooldowns(dt){
     this._tickSpellCooldownTimers(dt);
     const slots=document.querySelectorAll('#spell-bar .spell-slot');
     this.player.spells.forEach((s,i)=>{
       if(!slots[i])return;
       this._applySpellSlotCooldownUi(slots[i],s);
+      slots[i].classList.toggle('no-mana',this.player.mp<s.mpCost);
     });
   },
 
