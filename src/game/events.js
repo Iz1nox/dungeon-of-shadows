@@ -53,15 +53,14 @@ Object.assign(Game, {
 
     if(pool.length===0){
       container.innerHTML='<div style="color:#888;padding:12px">Brak dostępnych reliktów dla twojej klasy.</div>';
-      setTimeout(()=>{this.paused=false;screen.style.display='none';},1500);
+      setTimeout(()=>this._closeChoiceScreen(),1500);
       return;
     }
 
     this._renderChoiceButtons(container,choices,(choice)=>{
       const result=choice.action();
       if(result===false)return;
-      this.paused=false;
-      screen.style.display='none';
+      this._closeChoiceScreen();
     });
   },
 
@@ -193,6 +192,7 @@ Object.assign(Game, {
   },
 
   _handleStairsDownInteraction(){
+    if(this._floorTransitionPending)return;
     if(this.floor>=MAX_FLOOR&&!this.endlessMode){
       this.victory();
       return;
@@ -204,7 +204,7 @@ Object.assign(Game, {
     this.showFloorTransition(()=>{
       this.generateFloor();
       this.sound.stairs();
-      this.paused=false;
+      this.paused=this._hasBlockingOverlay();
       Achievements.checkAll(this);
     });
   },
@@ -353,10 +353,21 @@ Object.assign(Game, {
     this._renderChoiceButtons(container,choices,(choice)=>{
       const result=choice.action();
       if(result===false)return;
-      this.paused=false;screen.style.display='none';
+      this._closeChoiceScreen();
       this.sound.levelUp();
       Achievements.checkAll(this);
     });
+  },
+
+  // wspólne zamknięcie ekranu wyboru (awans / relikt / kapliczka); jeśli w kolejce
+  // czeka kolejny awans (np. dwa poziomy z jednego bossa) — pokazujemy go od razu
+  _closeChoiceScreen(){
+    document.getElementById('level-up-screen').style.display='none';
+    if((this._pendingLevelUps||0)>0&&this.running){
+      this.showLevelUp();
+      return;
+    }
+    this.paused=this._hasBlockingOverlay();
   },
 
   _handleTileInteraction(tile,tx,ty){

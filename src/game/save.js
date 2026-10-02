@@ -502,6 +502,12 @@ Object.assign(Game, {
     document.getElementById('death-screen').style.display='none';
     document.getElementById('win-screen').style.display='none';
     document.getElementById('settings-panel').classList.remove('open');
+    document.getElementById('meta-panel').classList.remove('open');
+    // otwarty wybór awansu/reliktu albo sklep należą do porzucanego stanu gry
+    document.getElementById('level-up-screen').style.display='none';
+    document.getElementById('shop-panel').classList.remove('open');
+    this._pendingLevelUps=0;
+    this.keys={};
   },
 
   _safeRunInt(value){
@@ -524,6 +530,7 @@ Object.assign(Game, {
     this.totalKills=this._safeRunInt(saveData.totalKills);
     this.totalGold=this._safeRunInt(saveData.totalGold);
     this.gameTime=Number.isFinite(saveData.gameTime)?Math.max(0,saveData.gameTime):0;
+    this._lavaTick=0; // znacznik z porzucanego stanu wstrzymywałby obrażenia od lawy
     this.playerClass=loadedClass;
     this._bossKills=this._safeRunInt(saveData.bossKills);
     this._maxCombo=this._safeRunInt(saveData.maxCombo);
@@ -585,13 +592,9 @@ Object.assign(Game, {
     this._mirrorEchoCooldown=Number.isFinite(saveData.mirrorEchoCooldown)?Math.max(0,saveData.mirrorEchoCooldown):0;
     this._mirrorPotionUses=this._safeRunInt(saveData.mirrorPotionUses);
     this._mirrorPotionKills=this._safeRunInt(saveData.mirrorPotionKills);
+    // aktywne eliksiry wracają razem z listą buffów gracza (_restorePlayerBuffsFromSave);
+    // dawny kod dokładał tu premie do jeszcze NIEwczytanego gracza (crash z ekranu tytułowego)
     this._mirrorPotionTimer=Number.isFinite(saveData.mirrorPotionTimer)?Math.max(0,saveData.mirrorPotionTimer):0;
-    if(this._mirrorPotionTimer>0){
-      this.player.critChance+=.08;
-      if(!this.player.talents)this.player.talents={};
-      this.player.talents.dodge=(this.player.talents.dodge||0)+.08;
-      this.player.buffs.push({type:'mirage',critValue:.08,dodgeValue:.08,duration:this._mirrorPotionTimer});
-    }
     this._riftPulseProcs=this._safeRunInt(saveData.riftPulseProcs);
     this._riftPulseKills=this._safeRunInt(saveData.riftPulseKills);
     this._riftPulseCooldown=Number.isFinite(saveData.riftPulseCooldown)?Math.max(0,saveData.riftPulseCooldown):0;
@@ -616,11 +619,6 @@ Object.assign(Game, {
     this._obeliskPotionUses=this._safeRunInt(saveData.obeliskPotionUses);
     this._obeliskPotionKills=this._safeRunInt(saveData.obeliskPotionKills);
     this._obeliskPotionTimer=Number.isFinite(saveData.obeliskPotionTimer)?Math.max(0,saveData.obeliskPotionTimer):0;
-    if(this._obeliskPotionTimer>0){
-      this.player.atk+=6;
-      this.player.def+=6;
-      this.player.buffs.push({type:'obelisk',atkValue:6,defValue:6,duration:this._obeliskPotionTimer});
-    }
     this._mirrorDashSurvived=this._safeRunInt(saveData.mirrorDashSurvived);
     this._riftNovaSurvived=this._safeRunInt(saveData.riftNovaSurvived);
     this._obeliskStormSurvived=this._safeRunInt(saveData.obeliskStormSurvived);
@@ -700,13 +698,15 @@ Object.assign(Game, {
     Object.assign(this.player,saveData.player);
     this._normalizeInventory();
     this.player.spells=ContentRegistry.getClassSpells(loadedClass).map(s=>({...s}));
-    this.player.buffs=[];
     this.player.stealthTimer=0;
     this.player.rageTimer=0;
     this.player.iFrames=0;
     this.player.attackTimer=0;
+    this.player.combo=0;
+    this.player.comboTimer=0;
     if(saveData.player.talents)this.player.talents={...this.player.talents,...saveData.player.talents};
     if(!Array.isArray(this.player.relics))this.player.relics=[];
+    this._restorePlayerBuffsFromSave(saveData.player);
   },
 
   _restoreEntitiesFromSave(saveData){
@@ -762,14 +762,57 @@ Object.assign(Game, {
     }catch(e){return null;}
   },
 
+  // statystyki BEZ tymczasowych buffów (mikstury siły/obrony, zwój ochrony,
+  // eliksiry Monolitu i Mirażu) — buffy zapisujemy osobno i nakładamy przy odczycie.
+  // Wcześniej zapis "zamrażał" bonus na stałe, a lista buffów znikała.
+  _getPlayerStatsWithoutBuffs(){
+    const p=this.player;
+    let atk=p.atk,def=p.def,crit=p.critChance,dodge=(p.talents&&p.talents.dodge)||0;
+    for(const b of p.buffs||[]){
+      if(b.type==='str')atk-=b.value||0;
+      if(b.type==='def')def-=b.value||0;
+      if(b.type==='obelisk'){atk-=b.atkValue||0;def-=b.defValue||0;}
+      if(b.type==='mirage'){crit-=b.critValue||0;dodge-=b.dodgeValue||0;}
+    }
+    return{atk,def,critChance:crit,dodge};
+  },
+
+  _buildSavePlayerBuffs(){
+    return(this.player.buffs||[])
+      .filter(b=>b&&typeof b.type==='string'&&b.duration>0)
+      .map(b=>({...b}));
+  },
+
+  _restorePlayerBuffsFromSave(savedPlayer){
+    const p=this.player;
+    p.buffs=[];
+    if(!Array.isArray(savedPlayer.buffs))return; // stary zapis: statystyki już zawierają bonusy
+    for(const raw of savedPlayer.buffs){
+      if(!raw||typeof raw.type!=='string'||!(raw.duration>0))continue;
+      const b={...raw};
+      if(b.type==='str')p.atk+=b.value||0;
+      if(b.type==='def')p.def+=b.value||0;
+      if(b.type==='obelisk'){p.atk+=b.atkValue||0;p.def+=b.defValue||0;}
+      if(b.type==='mirage'){
+        p.critChance+=b.critValue||0;
+        if(!p.talents)p.talents={};
+        p.talents.dodge=(p.talents.dodge||0)+(b.dodgeValue||0);
+      }
+      p.buffs.push(b);
+    }
+  },
+
   _buildSavePlayerState(){
+    const base=this._getPlayerStatsWithoutBuffs();
+    const talents={...(this.player.talents||{})};
+    if(Number.isFinite(talents.dodge))talents.dodge=base.dodge;
     return{
       x:this.player.x,y:this.player.y,
       hp:this.player.hp,maxHp:this.player.maxHp,
       mp:this.player.mp,maxMp:this.player.maxMp,
-      atk:this.player.atk,def:this.player.def,
+      atk:base.atk,def:base.def,
       speed:this.player.speed,
-      critChance:this.player.critChance,critMult:this.player.critMult,
+      critChance:base.critChance,critMult:this.player.critMult,
       level:this.player.level,xp:this.player.xp,xpToLevel:this.player.xpToLevel,
       gold:this.player.gold,
       inventory:this.player.inventory,
@@ -777,8 +820,9 @@ Object.assign(Game, {
       class:this.player.class,
       className:this.player.className,
       attackCd:this.player.attackCd,
-      talents:this.player.talents||{},
+      talents,
       relics:this.player.relics||[],
+      buffs:this._buildSavePlayerBuffs(),
     };
   },
 
@@ -1021,6 +1065,12 @@ Object.assign(Game, {
   saveGame(slot){
     if(!this._isValidSaveSlot(slot)){this._showToast('Nieprawidłowy slot zapisu!','#f44');return;}
     if(!this.running&&!this.paused){this._showToast('Nie można zapisać!','#f44');return;}
+    // zapis w trakcie zejścia po schodach utrwalał nowy numer piętra ze starą mapą,
+    // a w trakcie wyboru awansu/reliktu/kapliczki — gubił niewybraną nagrodę
+    if(this._floorTransitionPending){this._showToast('Poczekaj, aż skończysz schodzić…','#f88');return;}
+    if(document.getElementById('level-up-screen').style.display==='block'){
+      this._showToast('Najpierw dokończ wybór nagrody!','#f88');return;
+    }
     try{
       const saveObj=this._buildSaveObject();
       localStorage.setItem('dos_save_'+slot,JSON.stringify(saveObj));
@@ -1116,14 +1166,17 @@ Object.assign(Game, {
   },
   
   loadGame(slot){
-    if(!this._guardValidLoadSlot(slot))return;
+    if(!this._guardValidLoadSlot(slot))return false;
+    if(this._floorTransitionPending){this._showToast('Poczekaj, aż skończysz schodzić…','#f88');return false;}
     try{
       const d=this._readAndValidateSaveData(slot);
-      if(!this._guardNonEmptyLoadData(d))return;
+      if(!this._guardNonEmptyLoadData(d))return false;
       this._finalizeLoadFromSaveData(d,slot);
+      return true;
     }catch(e){
       this._showToast('Błąd wczytywania: '+e.message,'#f44');
       console.error('Load error:',e);
+      return false;
     }
   },
 
@@ -1137,6 +1190,7 @@ Object.assign(Game, {
   },
   
   deleteSave(slot){
+    if(!confirm(`Na pewno usunąć zapis ze slotu ${slot}? Tego nie da się cofnąć.`))return;
     this._removeSaveSlot(slot);
     this._notifySaveDeleted(slot);
   },

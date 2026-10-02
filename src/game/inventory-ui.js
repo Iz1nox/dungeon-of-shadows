@@ -297,7 +297,8 @@ Object.assign(Game, {
 
   _createDroppedItem(item){
     const p=this.player;
-    return{...item,x:Math.floor(p.x+.5),y:Math.floor(p.y+.5)};
+    // własne id: sztuka wyrzucona ze stosu nie może dzielić id z resztą stosu w plecaku
+    return{...item,x:Math.floor(p.x+.5),y:Math.floor(p.y+.5),id:Math.random().toString(36).substr(2,9)};
   },
 
   _consumeInventoryForDrop(idx,item){

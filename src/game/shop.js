@@ -10,8 +10,8 @@ Object.assign(Game, {
   },
   
   closeShop(){
-    this.paused=false;
     document.getElementById('shop-panel').classList.remove('open');
+    this.paused=this._hasBlockingOverlay();
     this._shopUIKey='';
   },
 

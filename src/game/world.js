@@ -167,6 +167,12 @@ Object.assign(Game, {
     // place player in first room
     const firstRoom=this.dungeon.rooms[0];
     this.player.x=firstRoom.cx;this.player.y=firstRoom.cy;
+    // start piętra nigdy na pułapce ani w lawie (generator potrafił je tam wylosować)
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+      const row=this.dungeon.map[firstRoom.cy+dy];
+      const t=row?row[firstRoom.cx+dx]:undefined;
+      if(t===TILE.TRAP||t===TILE.LAVA)row[firstRoom.cx+dx]=TILE.FLOOR;
+    }
 
     // summoned minions follow the necromancer down the stairs
     if(!Array.isArray(this.minions))this.minions=[];

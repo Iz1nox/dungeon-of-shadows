@@ -24,6 +24,7 @@ Object.assign(Game, {
   
   // ---- POTION QUICKSLOTS ----
   quickUsePotion(subtype){
+    if(this._isGameplayBlocked())return;
     const p=this.player;
     const idx=p.inventory.findIndex(i=>i.type==='potion'&&i.subtype===subtype);
     if(idx===-1){this.log(subtype==='hp'?'Brak mikstur HP!':'Brak mikstur MP!','info');return;}
@@ -90,31 +91,39 @@ Object.assign(Game, {
     }
   },
   
+  // z ekranu tytułowego: przy kilku zapisach gracz wybiera slot
+  // (wcześniej zawsze wczytywał się pierwszy zajęty, nawet jeśli był najstarszy)
   loadFromTitle(){
-    if(!this._findFirstSaveSlot()){
+    const slots=[];
+    for(let i=1;i<=SAVE_SLOTS;i++)if(this._getSaveInfo(i))slots.push(i);
+    if(!slots.length){
       alert('Brak zapisanych gier!');
       return;
     }
-    // show settings panel with save slots
-    document.getElementById('title-screen').style.display='none';
-
-    this._ensureRuntimeCanvasReady();
-
-    this._loadFirstAvailableSave();
-  },
-
-  _findFirstSaveSlot(){
-    for(let i=1;i<=SAVE_SLOTS;i++){
-      if(localStorage.getItem('dos_save_'+i))return i;
+    if(slots.length===1){this._loadFromTitleSlot(slots[0]);return;}
+    if(this.sound&&this.sound.ui)this.sound.ui();
+    let rows='';
+    for(const slot of slots){
+      const s=this._getSaveInfo(slot);
+      rows+=`<div class="meta-row">`
+        +`<div class="meta-info"><span class="meta-icon">📁</span> <b>Slot ${slot}: ${s.className} Lv.${s.level}</b>`
+        +`<br><span class="meta-desc">Piętro ${s.floor} | Złoto: ${s.gold} | ${s.date}</span></div>`
+        +`<button class="meta-buy" onclick="Game._loadFromTitleSlot(${slot})">Wczytaj</button>`
+        +`</div>`;
     }
-    return 0;
+    const panel=document.getElementById('meta-panel');
+    panel.innerHTML=`<h2>📂 Wczytaj zapis</h2><div class="meta-body">${rows}</div>`
+      +`<div class="panel-btns"><button class="btn-close" onclick="Game.closeMeta()">Anuluj</button></div>`;
+    panel.classList.add('open');
   },
 
-  _loadFirstAvailableSave(){
-    const firstSlot=this._findFirstSaveSlot();
-    if(!firstSlot)return false;
-    this.loadGame(firstSlot);
-    return true;
+  _loadFromTitleSlot(slot){
+    this.closeMeta();
+    const title=document.getElementById('title-screen');
+    title.style.display='none';
+    this._ensureRuntimeCanvasReady();
+    // nieudany odczyt nie może zostawić czarnego ekranu bez gry
+    if(!this.loadGame(slot)&&!this.player)title.style.display='';
   },
 
   _buildRunSummaryLine(){
@@ -137,7 +146,10 @@ Object.assign(Game, {
 
   // ---- GAME OVER ----
   gameOver(){
+    if(!this.running)return; // kilka trafień w tej samej klatce = jedna śmierć i jedna nagroda esencji
     this.running=false;
+    document.getElementById('level-up-screen').style.display='none';
+    this._pendingLevelUps=0;
     this.sound.stopAmbient();
     this.sound.death();
     const ess=this._awardRunEssence(false);
@@ -171,7 +183,7 @@ Object.assign(Game, {
     this.showFloorTransition(()=>{
       this.generateFloor();
       this.sound.stairs();
-      this.paused=false;
+      this.paused=this._hasBlockingOverlay();
       Achievements.checkAll(this);
     });
     requestAnimationFrame(t=>this.loop(t));

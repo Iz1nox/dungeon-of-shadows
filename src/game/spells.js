@@ -1,18 +1,23 @@
 'use strict';
 Object.assign(Game, {
   castSpell(index){
+    if(this._isGameplayBlocked())return; // też klik w pasek zaklęć podczas pauzy
     const p=this.player;
     if(index<0||index>=p.spells.length)return;
     const spell=p.spells[index];
     if(!this._canCastSpell(p,spell,index))return;
-    
+
     p.mp-=spell.mpCost;
     spell.cdTimer=spell.cd;
     this._spellsCast=(this._spellsCast||0)+1;
     this.sound.spell();
 
     const handler=this._resolveSpellCastHandler(spell,index);
-    if(handler)handler();
+    // talent "Moc Zaklęć" działa na wszystkie zaklęcia, także te bez żywiołu
+    // (Łańcuch Błyskawic, Drenaż, Cios w Plecy...) — wcześniej je pomijał
+    this._castingSpell=true;
+    try{if(handler)handler();}
+    finally{this._castingSpell=false;}
     this._triggerMirrorEchoOnSpellCast(spell);
     this._triggerObeliskEchoOnSpellCast(spell);
   },
@@ -406,9 +411,12 @@ Object.assign(Game, {
     const sx=p.x+.5,sy=p.y+.5;
     const a=Util.angle(p.x,p.y,this.mouseWorldX,this.mouseWorldY);
     const dashDist=Math.min(spell.range,Util.dist(p.x,p.y,this.mouseWorldX,this.mouseWorldY));
-    for(let d=0;d<dashDist;d+=.5){
-      const nx=p.x+Math.cos(a)*d;const ny=p.y+Math.sin(a)*d;
-      if(!this.dungeon.isPassable(Math.floor(nx),Math.floor(ny)))break;
+    // krok od pozycji startowej; sprawdzamy cały hitbox, inaczej szarża
+    // potrafiła wbić gracza w ścianę tak, że nie mógł się już ruszyć
+    const ox=p.x,oy=p.y;
+    for(let d=.25;d<=dashDist;d+=.25){
+      const nx=ox+Math.cos(a)*d;const ny=oy+Math.sin(a)*d;
+      if(!this._canPlayerOccupy(nx,ny))break;
       p.x=nx;p.y=ny;
     }
     return{sx,sy};

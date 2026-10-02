@@ -148,9 +148,11 @@ Object.assign(Game, {
       this._moveToward(e,e.patrolTarget.x,e.patrolTarget.y,dt*.5);
     }
     if(e.ai==='erratic'){
-      e.x+=Util.randF(-1,1)*dt*e.speed;
-      e.y+=Util.randF(-1,1)*dt*e.speed;
-      if(!this.dungeon.isPassable(Math.floor(e.x),Math.floor(e.y))){e.x-=Util.randF(-1,1)*dt*e.speed;e.y-=Util.randF(-1,1)*dt*e.speed;}
+      // ruch próbny — wcześniej "cofanie" losowało NOWY wektor i nietoperze wchodziły w ściany
+      const nx=e.x+Util.randF(-1,1)*dt*e.speed;
+      const ny=e.y+Util.randF(-1,1)*dt*e.speed;
+      if(this.dungeon.isPassable(Math.floor(nx),Math.floor(e.y)))e.x=nx;
+      if(this.dungeon.isPassable(Math.floor(e.x),Math.floor(ny)))e.y=ny;
     }
     return true;
   },
@@ -391,8 +393,8 @@ Object.assign(Game, {
     // knock the player back along the charge line
     const a=Util.angle(e.x,e.y,p.x,p.y);
     const kx=p.x+Math.cos(a)*.8,ky=p.y+Math.sin(a)*.8;
-    if(this.dungeon.isPassable(Math.floor(kx),Math.floor(p.y)))p.x=kx;
-    if(this.dungeon.isPassable(Math.floor(p.x),Math.floor(ky)))p.y=ky;
+    if(this._canPlayerOccupy(kx,p.y))p.x=kx;
+    if(this._canPlayerOccupy(p.x,ky))p.y=ky;
     this.screenFX.shake(6,.25);
     this.particles.burst(p.x+.5,p.y+.5,16,'#f80',3,.4,3);
     this.sound.playerHit();

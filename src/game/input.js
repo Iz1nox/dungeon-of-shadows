@@ -9,7 +9,16 @@ Object.assign(Game, {
     return false;
   },
 
+  // akcje, które działają na świat gry — blokowane w pauzie (awans, sklep,
+  // ustawienia, przejście piętra) i po śmierci; wcześniej np. F na schodach
+  // w trakcie wyboru awansu potrafił przeskoczyć piętro i zgubić nagrodę
+  _isWorldAction(actionName){
+    return actionName==='pickup'||actionName==='interact'||actionName==='potionHp'||actionName==='potionMp'||
+      actionName.startsWith('spell');
+  },
+
   _runBoundAction(actionName,event){
+    if(this._isWorldAction(actionName)&&this._isGameplayBlocked())return;
     switch(actionName){
       case 'inventory':
         this.toggleInventory();
@@ -44,6 +53,10 @@ Object.assign(Game, {
         break;
       case 'settings':
         event.preventDefault();
+        // Esc najpierw zamyka otwarty sklep / ekwipunek, a dopiero potem otwiera ustawienia
+        if(document.getElementById('shop-panel').classList.contains('open')){this.closeShop();break;}
+        if(document.getElementById('inventory-panel').classList.contains('open')&&
+           !document.getElementById('settings-panel').classList.contains('open')){this.toggleInventory();break;}
         this.toggleSettings();
         break;
       case 'quickSave':
@@ -91,6 +104,10 @@ Object.assign(Game, {
   },
 
   initInput(){
+    // tylko raz: po nieudanym wczytaniu z tytułu i starcie nowej gry
+    // listenery dublowały się i każdy klawisz działał podwójnie
+    if(this._inputBound)return;
+    this._inputBound=true;
     window.addEventListener('keydown',e=>{
       // if settings key-listening is active, capture key there
       if(this._settingsListening){
@@ -113,11 +130,14 @@ Object.assign(Game, {
       this.keys[e.key.toLowerCase()]=false;
       this.keys[e.code]=false;
     });
+    // po Alt+Tab keyup nigdy nie przychodzi — bez tego postać szła sama dalej
+    window.addEventListener('blur',()=>{this.keys={};});
     this.canvas.addEventListener('mousemove',e=>{
       this.mouseX=e.clientX;this.mouseY=e.clientY;
     });
     this.canvas.addEventListener('mousedown',e=>{
       e.preventDefault();
+      if(this._isGameplayBlocked())return;
       if(e.button===0){
         if(e.shiftKey)this.specialAttack();
         else this.playerAttack();

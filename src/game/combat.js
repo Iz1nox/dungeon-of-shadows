@@ -98,12 +98,30 @@ Object.assign(Game, {
     this.sound.spell();
   },
 
+  // cel ciosu: najbliższy wróg w zasięgu, z wyraźną preferencją dla tych,
+  // w których stronę celuje kursor (wcześniej brany był pierwszy z listy —
+  // potrafiłeś bić potwora za plecami zamiast tego, w którego celujesz)
+  _pickMeleeTarget(range){
+    const p=this.player;
+    const aim=Util.angle(p.x+.5,p.y+.5,this.mouseWorldX,this.mouseWorldY);
+    let best=null,bestScore=Infinity;
+    for(const e of this.enemies){
+      if(e.hp<=0)continue;
+      const d=Util.dist(p.x+.5,p.y+.5,e.x+.5,e.y+.5);
+      if(d>=range)continue;
+      let diff=Math.abs(Util.angle(p.x+.5,p.y+.5,e.x+.5,e.y+.5)-aim);
+      if(diff>Math.PI)diff=Math.PI*2-diff;
+      const score=d+diff*.8;
+      if(score<bestScore){bestScore=score;best=e;}
+    }
+    return best;
+  },
+
   _performMeleeAttack(range){
     const p=this.player;
     let hit=false;
-    for(const e of this.enemies){
-      if(e.hp<=0)continue;
-      if(Util.dist(p.x+.5,p.y+.5,e.x+.5,e.y+.5)<range){
+    const e=this._pickMeleeTarget(range); // melee trafia jednego wroga naraz
+    if(e){
         let dmg=p.atk+Util.rand(-2,3);
         let isCrit=Util.chance(p.critChance);
         if(isCrit)dmg=Math.floor(dmg*p.critMult);
@@ -117,12 +135,14 @@ Object.assign(Game, {
           if(weapon.effect==='freeze')this._freezeEnemy(e,2);
           if(weapon.effect==='burn')e.burnTimer=3;
           if(weapon.effect==='lifesteal'){const heal=Math.floor(dmg*.2);p.hp=Math.min(p.maxHp,p.hp+heal);}
-          // egzekucja nie działa na bossów (u nich tylko +50% obrażeń)
-          if(weapon.effect==='execute'&&e.hp<e.maxHp*.2)dmg=e.isBoss?Math.floor(dmg*1.5):e.hp;
+          if(weapon.effect==='execute'&&e.isBoss&&e.hp<e.maxHp*.2)dmg=Math.floor(dmg*1.5);
           if(weapon.effect==='reap'&&e.hp<e.maxHp*.3)dmg=Math.floor(dmg*1.5);
         }
 
         dmg=Math.max(1,dmg-e.def);
+        // egzekucja (nie na bossów) liczona PO pancerzu — wcześniej obrona wroga
+        // odejmowała się od "dobicia" i cel z DEF > 0 przeżywał egzekucję
+        const executing=weapon&&weapon.effect==='execute'&&!e.isBoss&&e.hp<e.maxHp*.2;
 
         // combo system with scaling multiplier
         p.combo++;p.comboTimer=2;
@@ -132,6 +152,7 @@ Object.assign(Game, {
           this.floatingText.add(p.x+.5,p.y-1,`COMBO x${p.combo}! (${comboMult}x)`,'#ff0');
         }
         this._maxCombo=Math.max(this._maxCombo||0,p.combo);
+        if(executing)dmg=Math.max(dmg,Math.ceil(e.hp));
 
         this._playerFocusTarget=e; // sługi skupiają ogień na celu gracza
         this.damageEnemy(e,dmg,'',isCrit);
@@ -154,9 +175,6 @@ Object.assign(Game, {
           this.screenFX.shake(5,.2);
           this.screenFX.flash('#ffcc44',.05);
         }
-
-        break; // hit one enemy at a time for melee
-      }
     }
     this._revealAdjacentSecretWalls();
     return hit;
@@ -300,7 +318,7 @@ Object.assign(Game, {
   damageEnemy(e,dmg,element='',crit=false){
     const p=this.player;
     // talent: spell power
-    if(p.talents&&p.talents.spellPower>0&&element)dmg=Math.floor(dmg*(1+p.talents.spellPower));
+    if(p.talents&&p.talents.spellPower>0&&(element||this._castingSpell))dmg=Math.floor(dmg*(1+p.talents.spellPower));
     if(e.isBoss)dmg*=ENCOUNTER_BALANCE.bossDamageTakenMult||.75;
 
     dmg=Math.max(1,Math.floor(dmg));

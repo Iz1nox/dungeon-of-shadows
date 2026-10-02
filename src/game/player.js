@@ -2,6 +2,7 @@
 Object.assign(Game, {
   updatePlayer(dt){
     const p=this.player;
+    this._unstickPlayer();
     const {dx,dy}=this._getPlayerInputVector();
     const {nx,ny}=this._computePlayerMoveTarget(p,dx,dy,dt);
     const ox=p.x,oy=p.y;

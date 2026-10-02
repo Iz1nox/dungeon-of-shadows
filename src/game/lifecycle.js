@@ -64,6 +64,45 @@ Object.assign(Game, {
     return true;
   },
 
+  // okna, które same trzymają grę w pauzie (wybór awansu/reliktu/kapliczki,
+  // sklep, przejście między piętrami) — zamknięcie ustawień nie może ich "odpauzować"
+  _hasBlockingOverlay(){
+    if(this._floorTransitionPending)return true;
+    if(document.getElementById('level-up-screen').style.display==='block')return true;
+    if(document.getElementById('shop-panel').classList.contains('open'))return true;
+    if(document.getElementById('settings-panel').classList.contains('open'))return true;
+    return false;
+  },
+
+  // akcje rozgrywki (atak, czary, interakcja, mikstury) są martwe w pauzie i po śmierci
+  _isGameplayBlocked(){
+    return !this.running||this.paused||!this.player;
+  },
+
+  // hitbox gracza to kwadrat 0.3–0.7 kafla — wszystkie 4 rogi muszą być na przechodnim polu
+  _canPlayerOccupy(x,y){
+    const d=this.dungeon;
+    return d.isPassable(Math.floor(x+.3),Math.floor(y+.3))&&
+      d.isPassable(Math.floor(x+.7),Math.floor(y+.7))&&
+      d.isPassable(Math.floor(x+.3),Math.floor(y+.7))&&
+      d.isPassable(Math.floor(x+.7),Math.floor(y+.3));
+  },
+
+  // awaryjne wyciągnięcie gracza ze ściany (np. po starym zapisie z błędną pozycją)
+  _unstickPlayer(){
+    const p=this.player;
+    if(this._canPlayerOccupy(p.x,p.y))return;
+    const bx=Math.floor(p.x+.5),by=Math.floor(p.y+.5);
+    let best=null,bestD=Infinity;
+    for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){
+      const tx=bx+dx,ty=by+dy;
+      if(!this._canPlayerOccupy(tx,ty))continue;
+      const d=Util.dist(p.x,p.y,tx,ty);
+      if(d<bestD){bestD=d;best={x:tx,y:ty};}
+    }
+    if(best){p.x=best.x;p.y=best.y;}
+  },
+
   _applyDebugOverlayVisibility(){
     this._ensureHudRefs();
     if(!this._hudEls||!this._hudEls.debugOverlay)return;
@@ -94,8 +133,10 @@ Object.assign(Game, {
     
     this.resize();
     window.addEventListener('resize',()=>this.resize());
-    
+
     this.playerClass=playerClass;
+    this._pendingLevelUps=0;
+    this._floorTransitionPending=false;
     this.endlessMode=false;
     this.floorAffix=null;
     this._arenaRemaining=0;
@@ -246,7 +287,6 @@ Object.assign(Game, {
     this.initInput();
     this.initSpellBar();
     this._ensureHudRefs();
-    this._applyDebugOverlayVisibility();
     this._resetUICaches();
     this._applyDebugOverlayVisibility();
     

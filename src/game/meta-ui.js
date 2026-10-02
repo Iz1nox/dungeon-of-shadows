@@ -18,6 +18,62 @@ Object.assign(Game, {
     this._renderBestiary();
     document.getElementById('meta-panel').classList.add('open');
   },
+  openChangelog(){
+    if(this.sound&&this.sound.ui)this.sound.ui();
+    const versions=[
+      {v:'2.3.1',title:'Łatka poprawek',items:[
+        'Szarża / Monolitowy Taran nie wbija już postaci w ścianę i ląduje przy kursorze',
+        'Aktywne mikstury i eliksiry nie zostają na stałe po zapisie i wczytaniu',
+        'Naprawiono błąd wczytywania zapisu z aktywnym eliksirem z ekranu tytułowego',
+        'Kilka awansów naraz = kilka wyborów nagrody (żadna nie przepada)',
+        'W pauzie, sklepie i przy wyborze nagrody klawisze akcji są zablokowane',
+        'Zapis wstrzymany podczas schodzenia i wyboru nagrody',
+        'Cios wręcz trafia wroga, w którego celujesz; egzekucja dobija opancerzonych',
+        'Moc Zaklęć działa na wszystkie zaklęcia',
+        'Wrogowie nie utykają na rogach ścian, nietoperze nie wchodzą w ściany',
+        'Po Alt+Tab postać nie idzie dalej sama',
+        'Start piętra nigdy na pułapce ani w lawie; czas biegu nie liczy pauzy',
+        'Esc zamyka sklep/ekwipunek; mapa nie zdradza ukrytych ścian',
+        'Wybór slotu przy wczytywaniu z menu, potwierdzenie usuwania zapisu',
+      ]},
+      {v:'2.3',title:'Nowy HUD',items:['Portret postaci, ghost-bary HP, radialne cooldowny, fazy bossa na pasku']},
+      {v:'2.2',title:'Głębia i Różnorodność',items:['Mimiki, afiksy Otchłani, skarbce z kluczem, areny, bestiariusz']},
+      {v:'2.1.3',title:'Mądrzejsi wrogowie',items:['Kiting, linia wzroku, strzał z wyprzedzeniem, ukrycie']},
+      {v:'2.1.2',title:'Wygląd pięter',items:['Style motywów, dekoracje, żyły żaru']},
+      {v:'2.1.1',title:'Rebalans walki',items:['Bossowie nie giną już od jednego kliknięcia']},
+      {v:'2.1',title:'Rework graficzny',items:['Proceduralne tekstury, nowy ekran tytułowy']},
+      {v:'2.0',title:'Echa Otchłani',items:['Nekromanta, nieskończona Otchłań, zwoje, nowi wrogowie']},
+      // wcześniejsze aktualizacje nie miały numerów wersji — opisane etapami
+      {v:'1.x',title:'Sanktuarium Dusz',items:['Trwałe ulepszenia między biegami za esencję dusz']},
+      {v:'1.x',title:'Głębsza walka',items:[
+        'Telegrafowane ataki wrogów z oknem na unik',
+        'Nowy wróg: szarżujący Dzik Otchłani',
+        'Ukryte ściany ze skrytkami pełnymi skarbów',
+      ]},
+      {v:'1.x',title:'Dźwięk',items:['Ambient pięter, kroki, bicie serca przy niskim HP, dźwięki UI i krytyków']},
+      {v:'1.x',title:'Szlify',items:[
+        'Balans reliktów, miękka mgła, unoszące się drobinki',
+        'Pułapki widoczne dla każdej klasy, kamienno-mosiężny wygląd UI',
+        'Postać nie utyka już w wodzie przy ścianie',
+      ]},
+      {v:'1.x',title:'Eventy i ekonomia',items:[
+        'Relikty, Studnie Cieni, Szczeliny i Obeliski na mapie',
+        'Czytelniejszy sklep i komunikaty walki, bezpieczniejsze zapisy, panel debug (F3)',
+      ]},
+      {v:'1.0',title:'Początek',items:['Proceduralne lochy, 3 klasy, oświetlenie, animacje i efekty']},
+    ];
+    let html=`<h2>📜 Co nowego</h2><div class="meta-body" style="max-height:55vh;overflow-y:auto">`;
+    for(const ver of versions){
+      html+=`<div style="color:#e8b24a;font-size:13px;margin:12px 0 4px"><b>${ver.v}</b> — ${ver.title}</div>`;
+      html+=`<ul style="margin:0 0 4px 18px;padding:0;color:#cbbfa6;font-size:12px;line-height:1.6">`;
+      for(const it of ver.items)html+=`<li>${it}</li>`;
+      html+=`</ul>`;
+    }
+    html+=`</div><div class="panel-btns"><button class="btn-close" onclick="Game.closeMeta()">Zamknij</button></div>`;
+    const panel=document.getElementById('meta-panel');
+    panel.innerHTML=html;
+    panel.classList.add('open');
+  },
   _renderBestiary(){
     const {discovered,total}=Bestiary.getDiscoveredCount();
     let html=`<h2>📖 Bestiariusz</h2>`

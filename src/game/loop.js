@@ -28,7 +28,6 @@ Object.assign(Game, {
   },
 
   _advanceGlobalTimers(dt){
-    this.gameTime+=dt;
     this.animTime+=dt;
     this.ambientPhase+=dt*.5;
     this._minimapElapsed+=dt;
@@ -125,8 +124,9 @@ Object.assign(Game, {
   loop(time){
     if(!this.running)return;
     const dt=this._updateFrameTiming(time);
-    
+
     if(!this.paused){
+      this.gameTime+=dt; // czas biegu nie rośnie w pauzie / menu
       this.update(dt);
     }
     this.render();

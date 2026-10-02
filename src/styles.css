@@ -110,10 +110,10 @@ canvas{display:block;image-rendering:pixelated;cursor:crosshair}
 #settings-panel .key-btn{background:linear-gradient(to bottom,#352a1f,#1c160f);border:1px solid var(--brass);border-radius:4px;color:#ffe7b3;padding:4px 14px;cursor:pointer;font-size:12px;min-width:70px;text-align:center;transition:all .15s;font-family:monospace}
 #settings-panel .key-btn:hover{background:linear-gradient(to bottom,#4d3e2c,#2a2117);border-color:var(--gold)}
 #settings-panel .key-btn.listening{background:#5b3a14;border-color:var(--ember);animation:key-pulse 1s infinite}
-#settings-panel .panel-btns{display:flex;gap:8px;justify-content:center;margin-top:15px}
-#settings-panel .panel-btns button{padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px;border:1px solid var(--brass);transition:all .15s}
-#settings-panel .btn-close{background:linear-gradient(to bottom,#352a1f,#1c160f);color:var(--parch)}
-#settings-panel .btn-close:hover{background:linear-gradient(to bottom,#4d3e2c,#2a2117)}
+#settings-panel .panel-btns,#meta-panel .panel-btns{display:flex;gap:8px;justify-content:center;margin-top:15px}
+#settings-panel .panel-btns button,#meta-panel .panel-btns button{padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px;border:1px solid var(--brass);transition:all .15s}
+#settings-panel .btn-close,#meta-panel .btn-close{background:linear-gradient(to bottom,#352a1f,#1c160f);color:var(--parch)}
+#settings-panel .btn-close:hover,#meta-panel .btn-close:hover{background:linear-gradient(to bottom,#4d3e2c,#2a2117)}
 #settings-panel .btn-reset{background:#4a2418;color:#f7b79a;border-color:#a3603e}
 #settings-panel .btn-reset:hover{background:#5e2f1f}
 #settings-panel .btn-save-slot{background:linear-gradient(to bottom,#264,#142);color:#afa;border-color:#4a4}

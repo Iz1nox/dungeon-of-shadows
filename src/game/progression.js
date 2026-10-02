@@ -3,6 +3,7 @@ Object.assign(Game, {
   grantXP(amount){
     const p=this.player;
     p.xp+=amount;
+    let gained=0;
     while(p.xp>=p.xpToLevel){
       p.xp-=p.xpToLevel;
       p.level++;
@@ -13,10 +14,15 @@ Object.assign(Game, {
         : PROGRESSION_BALANCE.xpToLevelGrowthBase;
       const growth=Math.max(PROGRESSION_BALANCE.xpToLevelGrowthMin,growthRaw);
       p.xpToLevel=Math.floor(p.xpToLevel*growth);
-      this.showLevelUp();
-      this.sound.levelUp();
+      // kilka poziomów naraz = kilka wyborów po kolei (wcześniej drugi ekran
+      // nadpisywał pierwszy i jedna nagroda przepadała)
+      this._pendingLevelUps=(this._pendingLevelUps||0)+1;
+      gained++;
       Achievements.checkAll(this);
     }
+    if(!gained)return;
+    this.sound.levelUp();
+    if(document.getElementById('level-up-screen').style.display!=='block')this.showLevelUp();
   },
 
   _buildLevelUpBaseChoices(){
@@ -76,23 +82,29 @@ Object.assign(Game, {
   showLevelUp(){
     const p=this.player;
     if(!p.talents)p.talents={lifeSteal:0,manaShield:0,dodge:0,thorns:0,critDmg:0,spellPower:0,goldFind:0,regenHp:0,regenMp:0};
+    if(!(this._pendingLevelUps>0))this._pendingLevelUps=1;
     this.paused=true;
     const screen=document.getElementById('level-up-screen');
     screen.style.display='block';
+    // poziom, za który teraz wybieramy nagrodę (przy kolejce — kolejne po sobie)
+    const shownLevel=p.level-this._pendingLevelUps+1;
     document.getElementById('level-up-info').innerHTML=
-      `<span style="color:#4af;font-size:20px">${p.className} Poziom ${p.level}</span>`;
+      `<span style="color:#4af;font-size:20px">${p.className} Poziom ${shownLevel}</span>`+
+      (this._pendingLevelUps>1?`<br><span style="font-size:11px;color:#888">Jeszcze ${this._pendingLevelUps-1} awans(e) do wyboru</span>`:'');
 
     const baseChoices=this._buildLevelUpBaseChoices();
     const talentChoices=this._buildLevelUpClassTalentChoices();
     this._appendLevelUpRegenChoices(talentChoices);
     const allChoices=this._pickLevelUpChoices(baseChoices,talentChoices);
-    
+
     const container=document.getElementById('level-up-choices');
     this._renderChoiceButtons(container,allChoices,(choice)=>{
-      choice.action();this.paused=false;screen.style.display='none';
-        p.hp=p.maxHp;p.mp=p.maxMp;
-        this.particles.magic(p.x+.5,p.y+.5,'#4af');
-        this.log(`⬆️ Awans na poziom ${p.level}!`,'info');
+      choice.action();
+      this._pendingLevelUps=Math.max(0,(this._pendingLevelUps||1)-1);
+      p.hp=p.maxHp;p.mp=p.maxMp;
+      this.particles.magic(p.x+.5,p.y+.5,'#4af');
+      this.log(`⬆️ Awans na poziom ${shownLevel}!`,'info');
+      this._closeChoiceScreen();
     });
   },
   

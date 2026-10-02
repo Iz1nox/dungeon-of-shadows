@@ -43,6 +43,9 @@ class Pathfinder {
         const nk=key(nx,ny);
         if(closed.has(nk))continue;
         if(!map.isPassable(nx,ny))continue;
+        // bez ścinania narożników: ruch po skosie tylko, gdy oba boczne pola są wolne —
+        // inaczej wróg utykał na rogu ściany, próbując przejść "przez" niego
+        if(dx&&dy&&(!map.isPassable(cur.x+dx,cur.y)||!map.isPassable(cur.x,cur.y+dy)))continue;
         let ng=gScore.get(bestK)+(dx&&dy?1.414:1);
         // wrogowie omijają niebezpieczny/spowalniający teren, gdy mają wybór
         const t=map.map[ny]?map.map[ny][nx]:0;

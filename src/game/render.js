@@ -27,6 +27,7 @@ Object.assign(Game, {
   },
 
   _executeFloorTransitionCallback(ft,callback){
+    this._floorTransitionPending=false;
     callback();
     this._fadeOutFloorTransition(ft);
   },
@@ -37,6 +38,7 @@ Object.assign(Game, {
   
   // ---- FLOOR TRANSITION ----
   showFloorTransition(callback){
+    this._floorTransitionPending=true; // zapis/odczyt wstrzymane, dopóki piętro się nie wygeneruje
     const ft=document.getElementById('floor-transition');
     this._setFloorTransitionContent();
     ft.classList.add('active');
@@ -799,10 +801,11 @@ Object.assign(Game, {
         const visible=this.dungeon.visible[y][x];
         const explored=this.dungeon.explored[y][x];
 
-        if(!explored&&!this.showFullMap)continue;
+        // nieodkryte pola nigdy nie są rysowane (przy otwartej mapie Tab
+        // prześwitywał spod niej cały, jeszcze niezbadany loch)
+        if(!explored)continue;
 
-        let alpha=visible?1:.35;
-        if(this.showFullMap&&!explored)alpha=.15;
+        const alpha=visible?1:.35;
         ctx.globalAlpha=alpha;
 
         this._renderTileByType(ctx,tile,x,y,sx,sy,alpha,visible);

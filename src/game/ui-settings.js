@@ -32,7 +32,8 @@ Object.assign(Game, {
   _closeSettingsPanel(){
     const panel=document.getElementById('settings-panel');
     panel.classList.remove('open');
-    this.paused=false;
+    // pod ustawieniami może czekać wybór awansu / sklep / przejście piętra
+    this.paused=this._hasBlockingOverlay();
     this._settingsListening=null;
   },
 

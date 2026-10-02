@@ -69,6 +69,8 @@ Object.assign(Game, {
   },
 
   _updateHudDebugOverlay(ui){
+    // ~130 linijek tekstu co klatkę — budujemy je tylko, gdy panel jest widoczny
+    if(!this._debugOverlayVisible)return;
     const debugText=this._buildDebugOverlayText();
     if(debugText!==this._debugOverlayKey&&ui.debugOverlay){
       ui.debugOverlay.textContent=debugText;
@@ -257,7 +259,8 @@ Object.assign(Game, {
   _getMapTileColor(tile,vis,mode='mini'){
     if(mode==='full'){
       switch(tile){
-        case TILE.WALL: return vis?'#555':'#333';
+        case TILE.WALL:
+        case TILE.SECRET_WALL: return vis?'#555':'#333'; // ukryta ściana nie może się zdradzać "dziurą"
         case TILE.FLOOR:
         case TILE.CORRIDOR: return vis?'#776':'#443';
         case TILE.DOOR: return '#986';
@@ -266,7 +269,7 @@ Object.assign(Game, {
         case TILE.STAIRS_DOWN: return '#4af';
         case TILE.WATER: return '#248';
         case TILE.LAVA: return '#a40';
-        case TILE.TRAP: return this.player.class==='rogue'?'#a22':'#443';
+        case TILE.TRAP: return '#a22'; // pułapki są widoczne dla każdej klasy (jak na planszy)
         case TILE.CHEST: return '#ff0';
         case TILE.SHRINE: return '#4af';
         case TILE.SHOP: return '#f80';
@@ -279,7 +282,9 @@ Object.assign(Game, {
     }
 
     switch(tile){
-      case TILE.WALL: return '#444';
+      case TILE.WALL:
+      case TILE.SECRET_WALL: return '#444';
+      case TILE.TRAP: return '#a22';
       case TILE.FLOOR:
       case TILE.CORRIDOR: return vis?'#666':'#333';
       case TILE.DOOR: return '#864';
