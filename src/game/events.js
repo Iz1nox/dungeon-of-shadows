@@ -13,55 +13,46 @@ Object.assign(Game, {
     const p=this.player;
     if(!p.relics)p.relics=[];
     const MAX_RELICS=3;
-
     this.paused=true;
-    const screen=document.getElementById('level-up-screen');
-    screen.style.display='block';
-    document.getElementById('level-up-info').innerHTML=
-      `<span style="color:#c8a0ff;font-size:20px">🜂 Mistyczny Relikt</span><br>`+
-      `<span style="font-size:11px;color:#888">Posiadasz ${p.relics.length}/${MAX_RELICS} reliktów</span>`;
-
-    const container=document.getElementById('level-up-choices');
-    const available=this._getAvailableRelics();
-    const pool=Util.shuffle([...available]).slice(0,3);
-
-    const rarityColor={common:'#aaa',rare:'#4af',epic:'#a06fff',legendary:'#f90'};
-
-    const choices=pool.map(relic=>({
-      label:`${relic.icon} <span style="color:${rarityColor[relic.rarity]||'#fff'}">${relic.name}</span>`,
-      desc:relic.desc,
-      action:()=>{
-        if(p.relics.length>=MAX_RELICS){
-          this.log(`🜂 Masz już ${MAX_RELICS} reliktów — limit osiągnięty`,'info');
-          return false;
-        }
-        relic.apply(p);
-        p.relics.push({id:relic.id,name:relic.name,icon:relic.icon,desc:relic.desc,rarity:relic.rarity});
-        this.particles.magic(p.x+.5,p.y+.5,'#c8a0ff');
-        this.particles.burst(p.x+.5,p.y+.5,18,'#a06fff',2.2,.38,2.6);
-        this.log(`🜂 Relikt "${relic.name}" ${relic.icon} — ${relic.desc}`,'spell');
-        this._inventoryVersion++;
-        Achievements.checkAll(this);
-      },
-    }));
-
-    choices.push({
-      label:'⏭️ Pomiń',
-      desc:'Odmów reliktu',
-      action:()=>{this.log('🜂 Rezygnujesz z reliktu','info');}
-    });
+    const pool=Util.shuffle([...this._getAvailableRelics()]).slice(0,3);
+    const title='Mistyczny Relikt';
+    const subtitle=`Posiadasz ${p.relics.length}/${MAX_RELICS} reliktów`;
 
     if(pool.length===0){
-      container.innerHTML='<div style="color:#888;padding:12px">Brak dostępnych reliktów dla twojej klasy.</div>';
+      // brak reliktów dla klasy: krótka strona pergaminu i samoczynne zamknięcie
+      GrimoireUI.openChoice({title,subtitle,cards:[],onPick:()=>{}});
+      const page=document.createElement('div');
+      page.className='gr-page';
+      page.textContent='Brak dostępnych reliktów dla twojej klasy.';
+      document.getElementById('level-up-choices').appendChild(page);
       setTimeout(()=>this._closeChoiceScreen(),1500);
       return;
     }
 
-    this._renderChoiceButtons(container,choices,(choice)=>{
-      const result=choice.action();
-      if(result===false)return;
+    // przy limicie karty zostają widoczne, ale niedostępne — dostępne jest tylko Pomiń
+    const atLimit=p.relics.length>=MAX_RELICS;
+    const cards=pool.map(relic=>({
+      icon:relic.icon,name:relic.name,desc:relic.desc,category:'Relikt',rarity:relic.rarity,
+      disabledReason:atLimit?`Limit reliktów (${MAX_RELICS}/${MAX_RELICS})`:undefined,
+    }));
+
+    GrimoireUI.openChoice({title,subtitle,cards,skip:{label:'Pomiń'},onPick:choice=>{
+      if(choice==='skip'){
+        this.log('🜂 Rezygnujesz z reliktu','info');
+        this._closeChoiceScreen();
+        return;
+      }
+      const relic=pool[choice];
+      if(!relic)return;
+      relic.apply(p);
+      p.relics.push({id:relic.id,name:relic.name,icon:relic.icon,desc:relic.desc,rarity:relic.rarity});
+      this.particles.magic(p.x+.5,p.y+.5,'#c8a0ff');
+      this.particles.burst(p.x+.5,p.y+.5,18,'#a06fff',2.2,.38,2.6);
+      this.log(`🜂 Relikt "${relic.name}" ${relic.icon} — ${relic.desc}`,'spell');
+      this._inventoryVersion++;
+      Achievements.checkAll(this);
       this._closeChoiceScreen();
-    });
+    }});
   },
 
   _useShadowWell(tx,ty){
@@ -296,42 +287,37 @@ Object.assign(Game, {
     return false;
   },
 
-  _renderChoiceButtons(container,choices,onSelect){
-    container.innerHTML='';
-    for(const c of choices){
-      const btn=document.createElement('button');
-      btn.className='choice-btn';
-      btn.innerHTML=c.label+(c.desc?`<br><span style="font-size:10px;color:#888">${c.desc}</span>`:'');
-      btn.onclick=()=>onSelect(c);
-      container.appendChild(btn);
-    }
+  // 2.5: karty kapliczki — niedostępne opcje mają powód zamiast komunikatu w logu po kliknięciu
+  _shrineUpgradeReason(item,missingLabel){
+    const p=this.player;
+    if(!item)return missingLabel;
+    if(p.gold<75)return `Brakuje ${75-p.gold} 💰`;
+    return undefined;
   },
 
   _buildShrineChoices(){
     const p=this.player;
     return[
-      {label:'💚 Pełne Leczenie',desc:'Przywróć HP i MP do max',action:()=>{
+      {icon:'💚',name:'Pełne Leczenie',desc:'Przywraca HP i MP do maksimum',category:'Kapliczka',rarity:'common',action:()=>{
         p.hp=p.maxHp;p.mp=p.maxMp;
         this.particles.heal(p.x+.5,p.y+.5);
         this.log('✨ Kapliczka przywraca ci siły!','heal');
       }},
-      {label:'⚔️ Wzmocnij Broń (+2 ATK)',desc:'Kosztuje 75 złota',action:()=>{
-        if(p.gold<75){this.log('Za mało złota!','info');return false;}
-        if(!p.equipment.weapon){this.log('Brak broni!','info');return false;}
+      {icon:'⚔️',name:'Wzmocnij Broń',desc:'+2 ATK dla założonej broni',category:'Kapliczka',rarity:'rare',cost:'75 💰',
+        disabledReason:this._shrineUpgradeReason(p.equipment.weapon,'Brak założonej broni'),action:()=>{
         p.gold-=75;p.equipment.weapon.baseAtk+=2;
         p.equipment.weapon.name+=' +';
         this.particles.magic(p.x+.5,p.y+.5,'#f80');
         this.log(`⚔ ${p.equipment.weapon.name} wzmocniona! (ATK +2)`,'item');
       }},
-      {label:'🛡️ Wzmocnij Zbroję (+2 DEF)',desc:'Kosztuje 75 złota',action:()=>{
-        if(p.gold<75){this.log('Za mało złota!','info');return false;}
-        if(!p.equipment.armor){this.log('Brak zbroi!','info');return false;}
+      {icon:'🛡️',name:'Wzmocnij Zbroję',desc:'+2 DEF dla założonej zbroi',category:'Kapliczka',rarity:'rare',cost:'75 💰',
+        disabledReason:this._shrineUpgradeReason(p.equipment.armor,'Brak założonej zbroi'),action:()=>{
         p.gold-=75;p.equipment.armor.baseDef+=2;
         p.equipment.armor.name+=' +';
         this.particles.magic(p.x+.5,p.y+.5,'#48f');
         this.log(`🛡 ${p.equipment.armor.name} wzmocniona! (DEF +2)`,'item');
       }},
-      {label:'💎 Błogosławieństwo (+5 HP +5 MP)',desc:'Permanentny bonus',action:()=>{
+      {icon:'💎',name:'Błogosławieństwo',desc:'Na stałe +5 HP i +5 MP',category:'Kapliczka',rarity:'rare',action:()=>{
         p.maxHp+=5;p.hp+=5;p.maxMp+=5;p.mp+=5;
         this.particles.magic(p.x+.5,p.y+.5,'#ff0');
         this.log('💎 Otrzymujesz błogosławieństwo!','spell');
@@ -343,20 +329,15 @@ Object.assign(Game, {
     this.dungeon.map[ty][tx]=TILE.FLOOR;
     this._shrineUses=(this._shrineUses||0)+1;
     this.paused=true;
-    const screen=document.getElementById('level-up-screen');
-    screen.style.display='block';
-    document.getElementById('level-up-info').innerHTML=
-      `<span style="color:#4af;font-size:20px">✨ Kapliczka Mocy</span><br><span style="font-size:12px;color:#888">Wybierz błogosławieństwo</span>`;
-    const container=document.getElementById('level-up-choices');
     const choices=this._buildShrineChoices();
-
-    this._renderChoiceButtons(container,choices,(choice)=>{
-      const result=choice.action();
-      if(result===false)return;
+    GrimoireUI.openChoice({title:'Kapliczka Mocy',subtitle:'Wybierz błogosławieństwo',cards:choices,onPick:i=>{
+      const choice=choices[i];
+      if(!choice)return;
+      choice.action();
       this._closeChoiceScreen();
       this.sound.levelUp();
       Achievements.checkAll(this);
-    });
+    }});
   },
 
   // wspólne zamknięcie ekranu wyboru (awans / relikt / kapliczka); jeśli w kolejce
