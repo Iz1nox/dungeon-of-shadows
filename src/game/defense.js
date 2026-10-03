@@ -380,11 +380,12 @@ Object.assign(Game, {
     Achievements.checkAll(this);
   },
   
+  // zwraca true, gdy obrażenia faktycznie weszły (false: nietykalność / unik talentem)
   damagePlayer(dmg,msg,cls='damage'){
     const p=this.player;
-    if(p.iFrames>0)return;
+    if(p.iFrames>0)return false;
 
-    if(this._tryPlayerDodge())return;
+    if(this._tryPlayerDodge())return false;
 
     if(this.floorAffix&&this.floorAffix.dmgTakenMult)dmg*=this.floorAffix.dmgTakenMult;
 
@@ -407,8 +408,9 @@ Object.assign(Game, {
     Achievements.checkAll(this);
 
     this._applyPlayerThornsRetaliation();
-    
+
     if(p.hp<=0)this.gameOver();
+    return true;
   },
   
   // ---- SPELLS ----

@@ -11,7 +11,13 @@ Object.assign(Game, {
   _bossAbilityCharge(boss){
     const a=this._bossAngleToPlayer(boss);
     const length=4;
-    this._bossTelegraph(boss,{shape:'line',x:boss.x+.5,y:boss.y+.5,angle:a,length,width:1,duration:.55,color:'#ff5522',onResolve:t=>{
+    // strefa kończy się tam, dokąd boss faktycznie dobiegnie (+ zasięg ciosu) — bez trafień przez ścianę
+    let reach=0;
+    for(let d=.25;d<=length;d+=.25){
+      if(!this.dungeon.isPassable(Math.floor(boss.x+Math.cos(a)*d),Math.floor(boss.y+Math.sin(a)*d)))break;
+      reach=d;
+    }
+    this._bossTelegraph(boss,{shape:'line',x:boss.x+.5,y:boss.y+.5,angle:a,length:Math.min(length,reach+.75),width:1,duration:.55,color:'#ff5522',onResolve:t=>{
       if(boss.hp<=0)return;
       const hit=this.isPlayerInTelegraph(t);
       // szarża po linii zapowiedzi (dawniej kroki sumowały się do ~10 kratek), stop na ścianie

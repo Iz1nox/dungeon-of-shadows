@@ -54,8 +54,8 @@ Object.assign(Game, {
     const bolts=6;
     const boltDamage=Math.max(1,Math.floor(enemy.atk*.55));
     enemy._telegraph=this.addTelegraph({shape:'ring',x:enemy.x+.5,y:enemy.y+.5,r:1.5,inner:0,duration:ELITE_PULSE_TELEGRAPH,
-      color:'#8f7bff',source:enemy,cancelOnSourceDeath:true,cancelOnSourceCc:true,onResolve:()=>{
-        const cx=enemy.x+.5,cy=enemy.y+.5;
+      color:'#8f7bff',source:enemy,cancelOnSourceDeath:true,cancelOnSourceCc:true,onResolve:t=>{
+        const cx=t.x,cy=t.y;
         for(let i=0;i<bolts;i++){
           const a=Math.PI*2*(i/bolts);
           this.projectiles.push(new Projectile(cx,cy,cx+Math.cos(a)*7,cy+Math.sin(a)*7,4.2,boltDamage,'#8f7bff',false,'arcane'));
@@ -78,8 +78,8 @@ Object.assign(Game, {
     const bolts=5;
     const spread=.6;
     enemy._telegraph=this.addTelegraph({shape:'cone',x:enemy.x+.5,y:enemy.y+.5,r:8.5,angle:toPlayer,spread,duration:ELITE_PULSE_TELEGRAPH,
-      color:'#6f93ff',source:enemy,cancelOnSourceDeath:true,cancelOnSourceCc:true,onResolve:()=>{
-        const cx=enemy.x+.5,cy=enemy.y+.5;
+      color:'#6f93ff',source:enemy,cancelOnSourceDeath:true,cancelOnSourceCc:true,onResolve:t=>{
+        const cx=t.x,cy=t.y;
         for(let i=0;i<bolts;i++){
           const t=bolts===1?0:i/(bolts-1);
           const a=toPlayer-spread+2*spread*t;
@@ -600,6 +600,8 @@ Object.assign(Game, {
       }
 
       if(this._updateEnemyWindup(e,dt,dist))continue;
+      // celuje / ładuje puls: stoi w miejscu — także gdy przy niskim HP chciałby uciekać
+      if(this._isEnemyTelegraphing(e))continue;
       if(this._runUnalertedEnemyAi(e,dt))continue;
 
       // ukrycie: zaalarmowani tracą trop i sprawdzają ostatnią znaną pozycję
@@ -673,12 +675,14 @@ Object.assign(Game, {
     const p=this.player;
     const dmg=Math.max(1,e.atk-p.def+Util.rand(-2,2));
     this._lastAttacker=e;
-    this.damagePlayer(dmg,`${e.icon} ${e.name} zadaje ${dmg} obrażeń`,'damage');
+    const landed=this.damagePlayer(dmg,`${e.icon} ${e.name} zadaje ${dmg} obrażeń`,'damage');
     e.attackTimer=e.attackCd;
     const _aa=Util.angle(e.x,e.y,p.x,p.y);
     e.attackAnim=.18;e.attackDX=Math.cos(_aa);e.attackDY=Math.sin(_aa);
     this.screenFX.shake(3,.15);
     
+    // cios uniknięty (unik / nietykalność) — bez efektów trafienia
+    if(!landed)return;
     // elite: vampiric — heal on hit
     if(e.vampiric){
       const heal=Math.floor(dmg*.3);
@@ -709,8 +713,8 @@ Object.assign(Game, {
     e.attackDX=Math.cos(angle);e.attackDY=Math.sin(angle);
     e._telegraph=this.addTelegraph({shape:'line',x:e.x+.5,y:e.y+.5,angle,
       length:Util.dist(e.x+.5,e.y+.5,tx,ty)+1,width:RANGED_TELEGRAPH.width,duration:RANGED_TELEGRAPH.duration,
-      color:e.projectileColor||'#f4f',source:e,cancelOnSourceDeath:true,cancelOnSourceCc:true,onResolve:()=>{
-        const ox=e.x+.5,oy=e.y+.5;
+      color:e.projectileColor||'#f4f',source:e,cancelOnSourceDeath:true,cancelOnSourceCc:true,onResolve:t=>{
+        const ox=t.x,oy=t.y; // strzał dokładnie po narysowanej linii
         this.projectiles.push(new Projectile(ox,oy,ox+Math.cos(angle)*10,oy+Math.sin(angle)*10,speed,e.atk,e.projectileColor||'#f4f',false));
         e.attackAnim=.18;
       }});

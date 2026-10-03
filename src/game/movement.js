@@ -70,7 +70,12 @@ Object.assign(Game, {
     let blocked=false;
     for(let i=0;i<steps&&!blocked;i++){
       const sx=p.dodgeDX*dist/steps,sy=p.dodgeDY*dist/steps;
-      if(this._canPlayerOccupy(p.x+sx,p.y+sy)){p.x+=sx;p.y+=sy;}
+      if(this._canPlayerOccupy(p.x+sx,p.y+sy)){p.x+=sx;p.y+=sy;continue;}
+      // ukośnie o ścianę: ślizg po wolnej osi, jak przy zwykłym chodzeniu
+      const okX=sx!==0&&this._canPlayerOccupy(p.x+sx,p.y);
+      const okY=sy!==0&&this._canPlayerOccupy(p.x,p.y+sy);
+      if(okX)p.x+=sx;
+      else if(okY)p.y+=sy;
       else blocked=true;
     }
     p._ghostAcc=(p._ghostAcc||0)+t;
