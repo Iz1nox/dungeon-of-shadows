@@ -50,18 +50,20 @@ Object.assign(Game, {
     enemy.riftPulseTimer-=dt;
     if(enemy.riftPulseTimer>0||dist>7)return;
 
-    const cx=enemy.x+.5,cy=enemy.y+.5;
+    enemy.riftPulseTimer=3.6+Math.random()*1.7;
     const bolts=6;
     const boltDamage=Math.max(1,Math.floor(enemy.atk*.55));
-    for(let i=0;i<bolts;i++){
-      const a=Math.PI*2*(i/bolts);
-      this.projectiles.push(new Projectile(cx,cy,cx+Math.cos(a)*7,cy+Math.sin(a)*7,4.2,boltDamage,'#8f7bff',false,'arcane'));
-    }
-
-    this.particles.magic(cx,cy,'#c6b4ff');
-    this.particles.burst(cx,cy,16,'#8f7bff',2.4,.35,2.8);
-    this.screenFX.flash('#8f7bff',.08);
-    enemy.riftPulseTimer=3.6+Math.random()*1.7;
+    enemy._telegraph=this.addTelegraph({shape:'ring',x:enemy.x+.5,y:enemy.y+.5,r:1.5,inner:0,duration:ELITE_PULSE_TELEGRAPH,
+      color:'#8f7bff',source:enemy,cancelOnSourceDeath:true,cancelOnSourceCc:true,onResolve:()=>{
+        const cx=enemy.x+.5,cy=enemy.y+.5;
+        for(let i=0;i<bolts;i++){
+          const a=Math.PI*2*(i/bolts);
+          this.projectiles.push(new Projectile(cx,cy,cx+Math.cos(a)*7,cy+Math.sin(a)*7,4.2,boltDamage,'#8f7bff',false,'arcane'));
+        }
+        this.particles.magic(cx,cy,'#c6b4ff');
+        this.particles.burst(cx,cy,16,'#8f7bff',2.4,.35,2.8);
+        this.screenFX.flash('#8f7bff',.08);
+      }});
   },
 
   _tryEliteObeliskPulse(enemy,dist,dt){
@@ -70,21 +72,23 @@ Object.assign(Game, {
     enemy.obeliskPulseTimer-=dt;
     if(enemy.obeliskPulseTimer>0||dist>7.5)return;
 
-    const cx=enemy.x+.5,cy=enemy.y+.5;
+    enemy.obeliskPulseTimer=4+Math.random()*1.8;
     const arcDamage=Math.max(1,Math.floor(enemy.atk*.5));
-    const toPlayer=Util.angle(cx,cy,this.player.x+.5,this.player.y+.5);
+    const toPlayer=Util.angle(enemy.x+.5,enemy.y+.5,this.player.x+.5,this.player.y+.5); // kąt ustalony na starcie
     const bolts=5;
     const spread=.6;
-    for(let i=0;i<bolts;i++){
-      const t=bolts===1?0:i/(bolts-1);
-      const a=toPlayer-spread+2*spread*t;
-      this.projectiles.push(new Projectile(cx,cy,cx+Math.cos(a)*8.5,cy+Math.sin(a)*8.5,4.7,arcDamage,'#6f93ff',false,'arcane'));
-    }
-
-    this.particles.magic(cx,cy,'#9cb6ff');
-    this.particles.burst(cx,cy,16,'#6f93ff',2.5,.35,2.8);
-    this.screenFX.flash('#8da9ff',.08);
-    enemy.obeliskPulseTimer=4+Math.random()*1.8;
+    enemy._telegraph=this.addTelegraph({shape:'cone',x:enemy.x+.5,y:enemy.y+.5,r:8.5,angle:toPlayer,spread,duration:ELITE_PULSE_TELEGRAPH,
+      color:'#6f93ff',source:enemy,cancelOnSourceDeath:true,cancelOnSourceCc:true,onResolve:()=>{
+        const cx=enemy.x+.5,cy=enemy.y+.5;
+        for(let i=0;i<bolts;i++){
+          const t=bolts===1?0:i/(bolts-1);
+          const a=toPlayer-spread+2*spread*t;
+          this.projectiles.push(new Projectile(cx,cy,cx+Math.cos(a)*8.5,cy+Math.sin(a)*8.5,4.7,arcDamage,'#6f93ff',false,'arcane'));
+        }
+        this.particles.magic(cx,cy,'#9cb6ff');
+        this.particles.burst(cx,cy,16,'#6f93ff',2.5,.35,2.8);
+        this.screenFX.flash('#8da9ff',.08);
+      }});
   },
 
   _chaseEnemyTowardPlayer(enemy,dt){
@@ -354,6 +358,7 @@ Object.assign(Game, {
   },
 
   _runEnemyCombatBehavior(e,dist,dt){
+    if(this._isEnemyTelegraphing(e))return; // celuje / ładuje puls — stoi w miejscu
     this._tryEliteRiftPulse(e,dist,dt);
     this._tryEliteObeliskPulse(e,dist,dt);
     if(dist<1.2&&e.attackTimer<=0){
@@ -698,10 +703,17 @@ Object.assign(Game, {
     const lead=.55;
     const tx=p.x+.5+(this._playerVelX||0)*flightTime*lead;
     const ty=p.y+.5+(this._playerVelY||0)*flightTime*lead;
-    this.projectiles.push(new Projectile(e.x+.5,e.y+.5,tx,ty,speed,e.atk,e.projectileColor||'#f4f',false));
+    // 2.4: linia celowania przed strzałem; kierunek ustalony teraz — krok w bok wystarcza
+    const angle=Util.angle(e.x+.5,e.y+.5,tx,ty);
     e.attackTimer=e.attackCd*1.5;
-    const _ra=Util.angle(e.x,e.y,tx,ty);
-    e.attackAnim=.18;e.attackDX=Math.cos(_ra);e.attackDY=Math.sin(_ra);
+    e.attackDX=Math.cos(angle);e.attackDY=Math.sin(angle);
+    e._telegraph=this.addTelegraph({shape:'line',x:e.x+.5,y:e.y+.5,angle,
+      length:Util.dist(e.x+.5,e.y+.5,tx,ty)+1,width:RANGED_TELEGRAPH.width,duration:RANGED_TELEGRAPH.duration,
+      color:e.projectileColor||'#f4f',source:e,cancelOnSourceDeath:true,cancelOnSourceCc:true,onResolve:()=>{
+        const ox=e.x+.5,oy=e.y+.5;
+        this.projectiles.push(new Projectile(ox,oy,ox+Math.cos(angle)*10,oy+Math.sin(angle)*10,speed,e.atk,e.projectileColor||'#f4f',false));
+        e.attackAnim=.18;
+      }});
   },
 
 });
