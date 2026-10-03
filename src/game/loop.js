@@ -45,6 +45,7 @@ Object.assign(Game, {
     this.particles.update(dt);
     this.floatingText.update(dt);
     this.screenFX.update(dt);
+    this._updateSlashFx(dt);
   },
 
   _updateLowHpHeartbeat(dt){

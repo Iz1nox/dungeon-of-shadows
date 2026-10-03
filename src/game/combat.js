@@ -77,6 +77,7 @@ Object.assign(Game, {
       return;
     }
 
+    this._spawnSlashFx(Util.angle(p.x+.5,p.y+.5,this.mouseWorldX,this.mouseWorldY),range);
     const hit=this._performMeleeAttack(range);
     if(hit)this.sound.hit();
     else this._combatFeedback('atk_range','Brak wroga w zasięgu ataku.');

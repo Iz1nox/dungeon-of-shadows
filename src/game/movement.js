@@ -4,6 +4,8 @@
 // =============================================
 const MOVE_TUNING = {accelTime:.08, decelTime:.06};
 const DODGE_TUNING = {distance:2.5, duration:.18, cooldown:1.0, graceIFrames:.1, ghostCount:4, ghostLife:.2};
+const SLASH_FX = {spread:50*Math.PI/180, life:.15};
+const AIM_LINE = {length:1.2, alpha:.25};
 
 Object.assign(Game, {
   _getPlayerTargetSpeed(p){
@@ -133,6 +135,49 @@ Object.assign(Game, {
     if(Math.abs(p.vy)<1e-3)p.vy=0;
     this._movePlayerAxes(p,p.vx*dt,p.vy*dt);
     return {dx,dy};
+  },
+
+  // ---- CZYTELNY ATAK: łuk cięcia (melee) i linia kierunku (dystans) ----
+  _spawnSlashFx(angle,range){
+    if(!Array.isArray(this._slashFx))this._slashFx=[];
+    const p=this.player;
+    this._slashFx.push({x:p.x+.5,y:p.y+.5,angle,range,life:SLASH_FX.life,maxLife:SLASH_FX.life});
+  },
+
+  _updateSlashFx(dt){
+    if(!Array.isArray(this._slashFx))return;
+    const p=this.player;
+    for(let i=this._slashFx.length-1;i>=0;i--){
+      const s=this._slashFx[i];
+      s.life-=dt;
+      if(s.life<=0){this._slashFx.splice(i,1);continue;}
+      s.x=p.x+.5;s.y=p.y+.5; // łuk podąża za postacią
+    }
+  },
+
+  _renderSlashFx(ctx,cx,cy){
+    if(!Array.isArray(this._slashFx)||!this._slashFx.length)return;
+    for(const s of this._slashFx){
+      const k=Math.max(0,s.life/s.maxLife);
+      const sx=s.x*TILE_SIZE-cx,sy=s.y*TILE_SIZE-cy,r=s.range*TILE_SIZE;
+      ctx.globalAlpha=.22*k;ctx.fillStyle='#fff3d6';
+      ctx.beginPath();ctx.moveTo(sx,sy);ctx.arc(sx,sy,r,s.angle-SLASH_FX.spread,s.angle+SLASH_FX.spread);ctx.closePath();ctx.fill();
+      ctx.globalAlpha=.85*k;ctx.strokeStyle='#ffffff';ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.arc(sx,sy,r,s.angle-SLASH_FX.spread,s.angle+SLASH_FX.spread);ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  },
+
+  _renderAimLine(ctx,cx,cy){
+    const p=this.player;
+    if(this.paused||!(p.class==='mage'||p.class==='necromancer'))return;
+    const ox=p.x+.5,oy=p.y+.5;
+    const a=Util.angle(ox,oy,this.mouseWorldX,this.mouseWorldY);
+    const sx=ox*TILE_SIZE-cx,sy=oy*TILE_SIZE-cy;
+    const start=TILE_SIZE*.45,end=AIM_LINE.length*TILE_SIZE;
+    ctx.globalAlpha=AIM_LINE.alpha;ctx.strokeStyle=this._getPlayerClassColor(p);ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(sx+Math.cos(a)*start,sy+Math.sin(a)*start);ctx.lineTo(sx+Math.cos(a)*end,sy+Math.sin(a)*end);ctx.stroke();
+    ctx.globalAlpha=1;
   },
 
   _resetMovementState(){

@@ -829,6 +829,8 @@ Object.assign(Game, {
     this._renderMinions(ctx,cx,cy);
     this._renderDodgeGhosts(ctx,cx,cy);
     this._renderPlayer(ctx,cx,cy);
+    this._renderSlashFx(ctx,cx,cy);
+    this._renderAimLine(ctx,cx,cy);
     this._renderProjectilesAndEffects(ctx,cx,cy);
   },
 
