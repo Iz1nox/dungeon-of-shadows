@@ -27,7 +27,7 @@
 }
 
 /* ---- karty nagród ---- */
-.gr-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;padding:8px 6px}
+.gr-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;padding:12px 12px 8px} /* zapas na wystającą pieczęć */
 .gr-card{
   width:148px;min-height:176px;box-sizing:border-box;position:relative;cursor:pointer;
   background:linear-gradient(170deg,var(--gr-parch-1),var(--gr-parch-2));border-radius:3px;

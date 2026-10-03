@@ -362,7 +362,7 @@ Object.assign(Game, {
   // wspólne zamknięcie ekranu wyboru (awans / relikt / kapliczka); jeśli w kolejce
   // czeka kolejny awans (np. dwa poziomy z jednego bossa) — pokazujemy go od razu
   _closeChoiceScreen(){
-    document.getElementById('level-up-screen').style.display='none';
+    GrimoireUI.close();
     if((this._pendingLevelUps||0)>0&&this.running){
       this.showLevelUp();
       return;
