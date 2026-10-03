@@ -21,6 +21,16 @@ Object.assign(Game, {
   openChangelog(){
     if(this.sound&&this.sound.ui)this.sound.ui();
     const versions=[
+      {v:'2.4',title:'Remaster: czucie gry',items:[
+        'Płynny ruch z rozpędem i hamowaniem',
+        'Unik na Spacji: krótki doskok z nietykalnością, odnawia się co 1 s',
+        'Łuk cięcia pokazuje zasięg ciosu; mag i nekromanta mają linię kierunku strzału',
+        'Każda umiejętność bossa ma zapowiedź na ziemi — w furii krótszą; nieuniknięte uderzenie boli mocniej',
+        'Zwykły cios bossa z rozmachem zamiast bez ostrzeżenia',
+        'Strzelcy celują przed strzałem — krok w bok wystarczy',
+        'Pulsy elit z zapowiedzią',
+        'Pociski wrogów wyraźnie odróżniają się od twoich',
+      ]},
       {v:'2.3.1',title:'Łatka poprawek',items:[
         'Szarża / Monolitowy Taran nie wbija już postaci w ścianę i ląduje przy kursorze',
         'Aktywne mikstury i eliksiry nie zostają na stałe po zapisie i wczytaniu',

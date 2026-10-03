@@ -22,7 +22,25 @@ class Projectile {
     const tx=Math.floor(this.x),ty=Math.floor(this.y);
     if(!map.isPassable(tx,ty))this.alive=false;
   }
+  // 2.4: pociski wrogów wyraźnie inne od pocisków gracza — ciemny rdzeń,
+  // czerwona obwódka i pulsująca poświata; kolor żywiołu tylko jako akcent
+  _drawHostile(ctx,camX,camY){
+    const pulse=.85+Math.sin(this.pulse)*.2;
+    for(let i=0;i<this.trail.length;i++){
+      ctx.globalAlpha=(i+1)/this.trail.length*.45;ctx.fillStyle='#7a1010';
+      ctx.beginPath();ctx.arc(this.trail[i].x*TILE_SIZE-camX,this.trail[i].y*TILE_SIZE-camY,2.6,0,Math.PI*2);ctx.fill();
+    }
+    const sx=this.x*TILE_SIZE-camX,sy=this.y*TILE_SIZE-camY;
+    ctx.globalAlpha=.28*pulse;ctx.fillStyle='#ff3020';
+    ctx.beginPath();ctx.arc(sx,sy,10*pulse,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;ctx.fillStyle='#1a0606';
+    ctx.beginPath();ctx.arc(sx,sy,4.6,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#ff4a3a';ctx.lineWidth=1.8;ctx.stroke();
+    ctx.fillStyle=this.color;
+    ctx.beginPath();ctx.arc(sx,sy,1.8,0,Math.PI*2);ctx.fill();
+  }
   draw(ctx,camX,camY){
+    if(!this.fromPlayer){this._drawHostile(ctx,camX,camY);return;}
     const isFire=this.element==='fire';
     const isIce=this.element==='ice';
     const isPoison=this.element==='poison';

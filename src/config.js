@@ -10,7 +10,7 @@ const MAX_FLOOR = 10;
 const FOV_RADIUS = 12;
 const SAVE_SLOTS = 3;
 const SAVE_SCHEMA_VERSION = 91;
-const GAME_VERSION = '2.3.1';
+const GAME_VERSION = '2.4.0';
 const SAVE_COMPAT_TAG = 'DOS-2.x';
 
 const EVENT_BALANCE = {

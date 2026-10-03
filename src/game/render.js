@@ -934,7 +934,9 @@ Object.assign(Game, {
     for(const proj of this.projectiles){
       const ppx=proj.x*TILE_SIZE-camX;const ppy=proj.y*TILE_SIZE-camY;
       const prg=ctx.createRadialGradient(ppx,ppy,0,ppx,ppy,TILE_SIZE*2);
-      prg.addColorStop(0,proj.color.replace(')',',0.15)').replace('rgb','rgba'));
+      // pocisk wroga: przytłumione czerwone światło — kolorowa poświata przykrywała
+      // ciemny rdzeń (dla kolorów hex replace() nie dodawał przezroczystości)
+      prg.addColorStop(0,proj.fromPlayer?proj.color.replace(')',',0.15)').replace('rgb','rgba'):'rgba(255,50,35,0.22)');
       prg.addColorStop(1,'rgba(0,0,0,0)');
       ctx.fillStyle=prg;ctx.fillRect(ppx-TILE_SIZE*2,ppy-TILE_SIZE*2,TILE_SIZE*4,TILE_SIZE*4);
     }
