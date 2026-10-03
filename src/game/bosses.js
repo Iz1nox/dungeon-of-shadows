@@ -156,12 +156,18 @@ Object.assign(Game, {
     this.log(`${boss.name} zionie ogniem!`,'boss');
   },
 
-  _bossAbilityStomp(boss,dist){
-    if(dist<4){
-      this.damagePlayer(Math.floor(boss.atk*.8),`${boss.name} wykonuje potężne uderzenie!`,'damage');
-      this.screenFX.shake(10,.5);
-    }
-    this.particles.burst(boss.x+.5,boss.y+.5,30,'#fa0',4,.6,4);
+  _bossAbilityStomp(boss){
+    const cx=boss.x+.5,cy=boss.y+.5;
+    this._bossTelegraph(boss,{shape:'circle',x:cx,y:cy,r:4,duration:.75,color:'#ff7a33',onResolve:t=>{
+      if(boss.hp<=0)return;
+      if(this.isPlayerInTelegraph(t)){
+        this.damagePlayer(Math.max(1,Math.floor(boss.atk*.8*BOSS_AOE_DAMAGE_MULT)),`${boss.name} wykonuje potężne uderzenie!`,'damage');
+        this.screenFX.shake(10,.5);
+      }else{
+        this.screenFX.shake(4,.25);
+      }
+      this.particles.burst(cx,cy,30,'#fa0',4,.6,4);
+    }});
   },
 
   _triggerBossAbility(boss,ability,dist){
@@ -174,7 +180,7 @@ Object.assign(Game, {
       rift_nova:()=>this._bossAbilityRiftNova(boss),
       obelisk_storm:()=>this._bossAbilityObeliskStorm(boss),
       breath:()=>this._bossAbilityBreath(boss),
-      stomp:()=>this._bossAbilityStomp(boss,dist)
+      stomp:()=>this._bossAbilityStomp(boss)
     };
     const handler=handlers[ability];
     if(handler)handler();
@@ -210,7 +216,7 @@ Object.assign(Game, {
   
   _updateBossAI(boss,dt,dist){
     boss.alerted=true;
-    boss.abilityTimer-=dt;
+    if(!this._isEnemyTelegraphing(boss))boss.abilityTimer-=dt;
     
     // Phase change
     if(boss.hp<boss.maxHp*.5&&boss.phase===1){
@@ -227,6 +233,9 @@ Object.assign(Game, {
       this.screenFX.flash('#f40',.3);
       this.sound.boss();
     }
+
+    // podczas zapowiedzi boss stoi: nie goni, nie bije, nie odlicza kolejnej umiejętności
+    if(this._isEnemyTelegraphing(boss))return;
 
     if(boss.abilityTimer<=0&&boss.abilities.length>0){
       const ability=this._pickBossAbility(boss,dist);

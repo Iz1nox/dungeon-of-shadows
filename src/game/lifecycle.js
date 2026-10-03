@@ -284,6 +284,7 @@ Object.assign(Game, {
     this._fpsSmoothed=60;
     this.initPlayer(playerClass);
     this._resetMovementState();
+    this.clearTelegraphs();
     Achievements.reset();
     this.generateFloor();
     this.initInput();

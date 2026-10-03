@@ -715,6 +715,7 @@ Object.assign(Game, {
     this.minions=[]; // summons are transient and never serialized
     this._playerFocusTarget=null;
     this._resetMovementState();
+    this.clearTelegraphs();
     const loadedEnemies=Array.isArray(saveData.enemies)?saveData.enemies:[];
     this.enemies=loadedEnemies.map(e=>({
       ...e,

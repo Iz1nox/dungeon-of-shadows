@@ -823,6 +823,7 @@ Object.assign(Game, {
   },
 
   _renderSceneActors(ctx,cx,cy){
+    this._renderTelegraphs(ctx,cx,cy); // zapowiedzi na podłodze, pod postaciami
     this._renderBraziers(ctx,cx,cy);
     this._renderFloorItems(ctx,cx,cy);
     this._renderEnemies(ctx,cx,cy);

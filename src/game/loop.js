@@ -60,6 +60,7 @@ Object.assign(Game, {
 
   _updateCoreSystems(dt){
     this._updateEntityCombatSystems(dt);
+    this.updateTelegraphs(dt);
     this._updateRuntimeVisualSystems(dt);
     this.updateSpellCooldowns(dt);
     this._updateLowHpHeartbeat(dt);

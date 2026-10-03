@@ -157,6 +157,7 @@ Object.assign(Game, {
     this.dungeon=new DungeonGenerator(MAP_W,MAP_H,this.floor,this.endlessMode).generate();
     this._applyEventCooldownToFloor();
     this.enemies=[];this.items=[];this.projectiles=[];
+    this.clearTelegraphs();
     this._playerFocusTarget=null;
     this._arenaRemaining=0;
     this._arenaRewardX=null;
