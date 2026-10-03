@@ -9,6 +9,9 @@
 .claude/skills/
 skills-lock.json
 
+# Superpowers: makiety z burzy mózgów, ledgery planów
+.superpowers/
+
 # Dependencies
 node_modules/
 
