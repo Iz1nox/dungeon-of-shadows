@@ -4,14 +4,14 @@
 // =============================================
 const DEFAULT_KEYS = {
   moveUp:'w', moveDown:'s', moveLeft:'a', moveRight:'d',
-  inventory:'i', pickup:'e', interact:'f', wait:' ',
+  inventory:'i', pickup:'e', interact:'f', dodge:' ',
   map:'Tab', spell1:'1', spell2:'2', spell3:'3', spell4:'4', spell5:'5',
   potionHp:'q', potionMp:'r',
   settings:'Escape', quickSave:'F5', quickLoad:'F9', debugOverlay:'F3'
 };
 const KEY_LABELS = {
   moveUp:'Ruch w górę', moveDown:'Ruch w dół', moveLeft:'Ruch w lewo', moveRight:'Ruch w prawo',
-  inventory:'Ekwipunek', pickup:'Podnoszenie', interact:'Interakcja', wait:'Czekaj',
+  inventory:'Ekwipunek', pickup:'Podnoszenie', interact:'Interakcja', dodge:'Unik',
   map:'Pełna mapa', spell1:'Zaklęcie 1', spell2:'Zaklęcie 2', spell3:'Zaklęcie 3',
   spell4:'Zaklęcie 4', spell5:'Zaklęcie 5',
   potionHp:'Mikstura HP', potionMp:'Mikstura MP',
@@ -32,7 +32,15 @@ function getKeyDisplay(key){
 function loadKeyBindings(){
   try{
     const saved=localStorage.getItem('dos_keybindings');
-    if(saved)return {...DEFAULT_KEYS,...JSON.parse(saved)};
+    if(saved){
+      const parsed=JSON.parse(saved)||{};
+      // 2.4: bezczynne "Czekaj" stało się "Unikiem" — przenosimy własne przypisanie gracza
+      if('wait' in parsed){
+        if(!('dodge' in parsed))parsed.dodge=parsed.wait;
+        delete parsed.wait;
+      }
+      return {...DEFAULT_KEYS,...parsed};
+    }
   }catch(e){}
   return {...DEFAULT_KEYS};
 }

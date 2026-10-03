@@ -148,6 +148,7 @@ Object.assign(Game, {
     this._corpseBurstsCast=0;
     this._darkPactsCast=0;
     this._scrollsUsed=0;
+    this._dodgeRolls=0;
     this._mysticEvents=0;
     this._shadowWellsUsed=0;
     this._echoVisions=0;

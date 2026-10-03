@@ -568,6 +568,10 @@ Object.assign(Game, {
     return player.class==='warrior'?'#c44':player.class==='mage'?'#44c':player.class==='necromancer'?'#84c':'#4a4';
   },
 
+  _getPlayerClassIcon(player){
+    return player.class==='warrior'?'⚔️':player.class==='mage'?'🔮':player.class==='necromancer'?'💀':'🗡️';
+  },
+
   _renderPlayerShadow(ctx,pcx,py){
     ctx.globalAlpha=.35;ctx.fillStyle='#000';
     ctx.beginPath();ctx.ellipse(pcx,py+TILE_SIZE-1,TILE_SIZE*.35,5,0,0,Math.PI*2);ctx.fill();
@@ -597,7 +601,7 @@ Object.assign(Game, {
     ctx.strokeStyle=classColor;ctx.lineWidth=.8;
     ctx.beginPath();ctx.arc(pcx,pcy,TILE_SIZE*.40,0,Math.PI*2);ctx.stroke();
 
-    const pIcon=p.class==='warrior'?'⚔️':p.class==='mage'?'🔮':p.class==='necromancer'?'💀':'🗡️';
+    const pIcon=this._getPlayerClassIcon(p);
     const pBob=Math.sin(this.animTime*3.5)*1.5;
     const breathe=1+Math.sin(this.animTime*3.5)*.06;
     ctx.save();ctx.translate(pcx,pcy-1+pBob);ctx.scale(2-breathe,breathe);
@@ -627,7 +631,7 @@ Object.assign(Game, {
     this._renderPlayerClassAura(ctx,pcx,pcy,classColor);
 
     if(p.stealthTimer>0)ctx.globalAlpha=.35;
-    if(p.iFrames>0&&Math.floor(this.animTime*20)%2===0)ctx.globalAlpha=.3;
+    if(p.iFrames>0&&!this._isDodgeInvulnerable(p)&&Math.floor(this.animTime*20)%2===0)ctx.globalAlpha=.3;
 
     this._renderPlayerBodyAndIcon(ctx,p,pcx,pcy,classColor);
 
@@ -823,6 +827,7 @@ Object.assign(Game, {
     this._renderFloorItems(ctx,cx,cy);
     this._renderEnemies(ctx,cx,cy);
     this._renderMinions(ctx,cx,cy);
+    this._renderDodgeGhosts(ctx,cx,cy);
     this._renderPlayer(ctx,cx,cy);
     this._renderProjectilesAndEffects(ctx,cx,cy);
   },

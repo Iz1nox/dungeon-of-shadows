@@ -10,6 +10,7 @@ Object.assign(Game, {
 
   _applySaveBaseDefaults(d){
     if(!Number.isFinite(d.bossKills))d.bossKills=0;
+    if(!Number.isFinite(d.dodgeRolls))d.dodgeRolls=0;
     if(!Number.isFinite(d.maxCombo))d.maxCombo=0;
     if(!Array.isArray(d.achievements))d.achievements=[];
     if(!Number.isFinite(d.echoVisions))d.echoVisions=0;
@@ -527,6 +528,7 @@ Object.assign(Game, {
     this._corpseBurstsCast=this._safeRunInt(saveData.corpseBurstsCast);
     this._darkPactsCast=this._safeRunInt(saveData.darkPactsCast);
     this._scrollsUsed=this._safeRunInt(saveData.scrollsUsed);
+    this._dodgeRolls=this._safeRunInt(saveData.dodgeRolls);
     this.totalKills=this._safeRunInt(saveData.totalKills);
     this.totalGold=this._safeRunInt(saveData.totalGold);
     this.gameTime=Number.isFinite(saveData.gameTime)?Math.max(0,saveData.gameTime):0;
@@ -884,6 +886,7 @@ Object.assign(Game, {
       corpseBurstsCast:this._corpseBurstsCast||0,
       darkPactsCast:this._darkPactsCast||0,
       scrollsUsed:this._scrollsUsed||0,
+      dodgeRolls:this._dodgeRolls||0,
       bossKills:this._bossKills||0,
       maxCombo:this._maxCombo||0,
       mysticEvents:this._mysticEvents||0,

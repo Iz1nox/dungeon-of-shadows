@@ -35,6 +35,7 @@ class SoundFX {
   crit(){this._play(720,'square',.05,.13);setTimeout(()=>this._play(300,'sawtooth',.13,.13),30);}
   heartbeat(){this._play(58,'sine',.16,.2);setTimeout(()=>this._play(48,'sine',.22,.16),170);}
   ui(){this._play(440,'triangle',.05,.05);}
+  dodge(){this._play(900,'triangle',.07,.05);setTimeout(()=>this._play(500,'sine',.08,.04),30);}
   buy(){this._play(520,'sine',.07,.07);setTimeout(()=>this._play(740,'sine',.1,.07),70);}
   startAmbient(theme){
     if(!this.enabled)return;

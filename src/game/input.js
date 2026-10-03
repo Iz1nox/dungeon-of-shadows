@@ -13,7 +13,7 @@ Object.assign(Game, {
   // ustawienia, przejście piętra) i po śmierci; wcześniej np. F na schodach
   // w trakcie wyboru awansu potrafił przeskoczyć piętro i zgubić nagrodę
   _isWorldAction(actionName){
-    return actionName==='pickup'||actionName==='interact'||actionName==='potionHp'||actionName==='potionMp'||
+    return actionName==='pickup'||actionName==='interact'||actionName==='potionHp'||actionName==='potionMp'||actionName==='dodge'||
       actionName.startsWith('spell');
   },
 
@@ -44,8 +44,9 @@ Object.assign(Game, {
       case 'spell5':
         this.castSpell(4);
         break;
-      case 'wait':
+      case 'dodge':
         event.preventDefault();
+        this.tryDodge();
         break;
       case 'map':
         event.preventDefault();event.stopPropagation();
@@ -84,7 +85,7 @@ Object.assign(Game, {
     return[
       'inventory','pickup','interact',
       'spell1','spell2','spell3','spell4','spell5',
-      'wait','map','settings','quickSave','quickLoad','debugOverlay',
+      'dodge','map','settings','quickSave','quickLoad','debugOverlay',
       'potionHp','potionMp'
     ];
   },

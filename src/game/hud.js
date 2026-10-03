@@ -103,6 +103,26 @@ Object.assign(Game, {
     
     // update quickslots
     this._updateQuickslots();
+    this._updateDodgeIndicator(p);
+  },
+
+  // radialny wskaźnik gotowości uniku (jak cooldowny zaklęć) z błyskiem po odnowieniu
+  _updateDodgeIndicator(p){
+    const el=document.getElementById('dodge-indicator');
+    if(!el)return;
+    const frac=Math.round(Math.max(0,Math.min(1,(p.dodgeCd||0)/DODGE_TUNING.cooldown))*20)/20;
+    const key=getKeyDisplay(KeyBindings.dodge||' ');
+    const cacheKey=`${frac}|${key}`;
+    if(cacheKey===this._dodgeIndicatorKey)return;
+    const wasOnCd=el.classList.contains('on-cd');
+    this._dodgeIndicatorKey=cacheKey;
+    el.querySelector('.di-cd').style.setProperty('--p',frac);
+    el.querySelector('.di-key').textContent=key;
+    el.title=`Unik (${key})`;
+    el.classList.toggle('on-cd',frac>0);
+    if(wasOnCd&&frac===0){
+      el.classList.remove('ready-flash');void el.offsetWidth;el.classList.add('ready-flash');
+    }
   },
 
   _buildDebugOverlayText(){

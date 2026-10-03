@@ -17,6 +17,7 @@ const Game = {
   _corpseBurstsCast:0,
   _darkPactsCast:0,
   _scrollsUsed:0,
+  _dodgeRolls:0,
   _bossKills:0, _maxCombo:0, _mysticEvents:0, _shadowWellsUsed:0,
   _echoVisions:0,
   _shadowDances:0,
