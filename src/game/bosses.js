@@ -1,159 +1,151 @@
 'use strict';
 Object.assign(Game, {
-  _bossAbilityCharge(boss,dist){
+  // 2.4: każda umiejętność = zapowiedź (dane liczone na starcie) + uderzenie w onResolve.
+  // Boss stoi w miejscu, dopóki zapowiedź się nie rozstrzygnie (_updateBossAI).
+
+  _bossAngleToPlayer(boss){
     const p=this.player;
-    const a=Util.angle(boss.x,boss.y,p.x,p.y);
-    for(let i=0;i<5;i++){
-      const nx=boss.x+Math.cos(a)*i;const ny=boss.y+Math.sin(a)*i;
-      if(!this.dungeon.isPassable(Math.floor(nx),Math.floor(ny)))break;
-      boss.x=nx;boss.y=ny;
+    return Util.angle(boss.x+.5,boss.y+.5,p.x+.5,p.y+.5);
+  },
+
+  _bossAbilityCharge(boss){
+    const a=this._bossAngleToPlayer(boss);
+    const length=4;
+    this._bossTelegraph(boss,{shape:'line',x:boss.x+.5,y:boss.y+.5,angle:a,length,width:1,duration:.55,color:'#ff5522',onResolve:t=>{
+      if(boss.hp<=0)return;
+      const hit=this.isPlayerInTelegraph(t);
+      // szarża po linii zapowiedzi (dawniej kroki sumowały się do ~10 kratek), stop na ścianie
+      for(let d=.25;d<=length;d+=.25){
+        const nx=boss.x+Math.cos(a)*.25,ny=boss.y+Math.sin(a)*.25;
+        if(!this.dungeon.isPassable(Math.floor(nx),Math.floor(ny)))break;
+        boss.x=nx;boss.y=ny;
+      }
+      if(hit)this._enemyAttack(boss);
+      this.screenFX.shake(5,.3);
+      this.particles.burst(boss.x+.5,boss.y+.5,20,boss.color,3,.5);
+    }});
+  },
+
+  _pickBossSummonPoints(boss,count){
+    const points=[];
+    for(let i=0;i<12&&points.length<count;i++){
+      const sx=boss.x+Util.rand(-3,3),sy=boss.y+Util.rand(-3,3);
+      if(this.dungeon.isPassable(Math.floor(sx),Math.floor(sy)))points.push({x:sx,y:sy});
     }
-    if(dist<2)this._enemyAttack(boss);
-    this.screenFX.shake(5,.3);
-    this.particles.burst(boss.x+.5,boss.y+.5,20,boss.color,3,.5);
+    return points;
   },
 
   _bossAbilitySummon(boss){
     const types=ContentRegistry.getEnemyTypesForFloor(this.floor);
-    for(let i=0;i<3;i++){
-      const et=Util.pick(types);
-      const sx=boss.x+Util.rand(-3,3),sy=boss.y+Util.rand(-3,3);
-      if(this.dungeon.isPassable(Math.floor(sx),Math.floor(sy))){
-        const minion=this._makeEnemy(et,sx,sy);minion.alerted=true;
-        this.enemies.push(minion);
-      }
-    }
+    const points=this._pickBossSummonPoints(boss,3);
+    if(!points.length)return;
     this.log(`${boss.name} przywołuje potwory!`,'boss');
     this.particles.magic(boss.x+.5,boss.y+.5,'#a0f');
+    points.forEach((pt,i)=>{
+      const opts={shape:'circle',x:pt.x+.5,y:pt.y+.5,r:.6,duration:.6,color:'#b070ff',onResolve:()=>{
+        if(boss.hp<=0)return;
+        const minion=this._makeEnemy(Util.pick(types),pt.x,pt.y);minion.alerted=true;
+        this.enemies.push(minion);
+        this.particles.magic(pt.x+.5,pt.y+.5,'#a0f');
+      }};
+      // boss jest "zajęty" pierwszą runą; pozostałe też giną razem z nim
+      if(i===0)this._bossTelegraph(boss,opts);
+      else this.addTelegraph({...opts,duration:opts.duration*(boss.phase>=3?BOSS_FURY_TELEGRAPH_MULT:1),source:boss,cancelOnSourceDeath:true});
+    });
+  },
+
+  _bossConeVolley(boss,{spread,count,damage,speed,colors,duration}){
+    const a=this._bossAngleToPlayer(boss);
+    const ox=boss.x+.5,oy=boss.y+.5;
+    this._bossTelegraph(boss,{shape:'cone',x:ox,y:oy,r:6,angle:a,spread,duration,color:'#ff8a33',onResolve:()=>{
+      if(boss.hp<=0)return;
+      for(let i=0;i<count;i++){
+        const s=a+Util.randF(-spread,spread);
+        this.projectiles.push(new Projectile(ox,oy,ox+Math.cos(s)*10,oy+Math.sin(s)*10,speed,damage,Util.pick(colors),false,'fire'));
+      }
+    }});
   },
 
   _bossAbilityFireball(boss){
-    const p=this.player;
-    for(let i=0;i<3;i++){
-      const angle=Util.angle(boss.x,boss.y,p.x,p.y)+Util.randF(-.3,.3);
-      this.projectiles.push(new Projectile(boss.x+.5,boss.y+.5,boss.x+Math.cos(angle)*10,boss.y+Math.sin(angle)*10,5,boss.atk,'#f80',false,'fire'));
-    }
+    this._bossConeVolley(boss,{spread:.3,count:3,damage:boss.atk,speed:5,colors:['#f80'],duration:.45});
+  },
+
+  _bossAbilityBreath(boss){
+    this.log(`${boss.name} zionie ogniem!`,'boss');
+    this._bossConeVolley(boss,{spread:.5,count:8,damage:Math.floor(boss.atk*.7),speed:4,colors:['#f80','#f40','#ff0'],duration:.45});
   },
 
   _bossAbilityTeleport(boss){
     const room=Util.pick(this.dungeon.rooms);
     this.particles.magic(boss.x+.5,boss.y+.5,'#a0f');
-    boss.x=room.cx;boss.y=room.cy;
-    this.particles.magic(boss.x+.5,boss.y+.5,'#a0f');
+    this._bossTelegraph(boss,{shape:'circle',x:room.cx+.5,y:room.cy+.5,r:.8,duration:.4,color:'#a060ff',onResolve:()=>{
+      if(boss.hp<=0)return;
+      boss.x=room.cx;boss.y=room.cy;
+      this.particles.magic(boss.x+.5,boss.y+.5,'#a0f');
+    }});
   },
 
   _bossAbilityMirrorDash(boss){
     const p=this.player;
-    const fromX=boss.x+.5,fromY=boss.y+.5;
     const a=Util.angle(boss.x,boss.y,p.x,p.y);
-    const targetX=p.x-Math.cos(a)*1.2;
-    const targetY=p.y-Math.sin(a)*1.2;
-    this.particles.magic(fromX,fromY,'#d8c4ff');
-    if(this.dungeon.isPassable(Math.floor(targetX),Math.floor(targetY))){
-      boss.x=targetX;boss.y=targetY;
-    }else{
-      this._bossAbilityTeleport(boss);
+    let lx=p.x-Math.cos(a)*1.2,ly=p.y-Math.sin(a)*1.2;
+    if(!this.dungeon.isPassable(Math.floor(lx),Math.floor(ly))){
+      const room=Util.pick(this.dungeon.rooms);lx=room.cx;ly=room.cy;
     }
     this.particles.magic(boss.x+.5,boss.y+.5,'#d8c4ff');
-    const dist=Util.dist(boss.x,boss.y,p.x,p.y);
-    if(dist<2.2){
-      this.damagePlayer(Math.floor(boss.atk*.85),`${boss.name} wykonuje lustrzany doskok!`,'damage');
-    }
-    if(this.player.hp>0){
-      this._mirrorDashSurvived=(this._mirrorDashSurvived||0)+1;
-      Achievements.checkAll(this);
-    }
-    this.screenFX.shake(6,.24);
-    this.screenFX.flash('#cfb6ff',.12);
+    this._bossTelegraph(boss,{shape:'circle',x:lx+.5,y:ly+.5,r:2.2,duration:.5,color:'#cfb6ff',onResolve:t=>{
+      if(boss.hp<=0)return;
+      boss.x=lx;boss.y=ly;
+      this.particles.magic(boss.x+.5,boss.y+.5,'#d8c4ff');
+      if(this.isPlayerInTelegraph(t)){
+        this.damagePlayer(Math.max(1,Math.floor(boss.atk*.85*BOSS_AOE_DAMAGE_MULT)),`${boss.name} wykonuje lustrzany doskok!`,'damage');
+      }
+      if(this.player.hp>0){
+        this._mirrorDashSurvived=(this._mirrorDashSurvived||0)+1;
+        Achievements.checkAll(this);
+      }
+      this.screenFX.shake(6,.24);
+      this.screenFX.flash('#cfb6ff',.12);
+    }});
+  },
+
+  // nova / burza: pierścień wokół bossa, obrażenia rosną ku środkowi, potem salwa pocisków
+  _bossRadialBlast(boss,{radius,base,scale,bolts,ringOffset,boltReach,boltSpeed,boltMult,color,particleColor,magicColor,flash,logMsg,hitMsg,onSurvive}){
+    const cx=boss.x+.5,cy=boss.y+.5;
+    this.log(logMsg,'boss');
+    this._bossTelegraph(boss,{shape:'ring',x:cx,y:cy,r:radius,inner:0,duration:.8,color,onResolve:t=>{
+      if(boss.hp<=0)return;
+      if(this.isPlayerInTelegraph(t)){
+        const p=this.player;
+        const intensity=Math.max(0,1-Util.dist(cx,cy,p.x+.5,p.y+.5)/radius);
+        const dmg=Math.max(1,Math.floor(boss.atk*(base+scale*intensity)));
+        this.damagePlayer(Math.max(1,Math.floor(dmg*BOSS_AOE_DAMAGE_MULT)),hitMsg,'damage');
+      }
+      for(let i=0;i<bolts;i++){
+        const a=Math.PI*2*(i/bolts);
+        const sx=cx+Math.cos(a)*ringOffset,sy=cy+Math.sin(a)*ringOffset;
+        this.projectiles.push(new Projectile(sx,sy,sx+Math.cos(a)*boltReach,sy+Math.sin(a)*boltReach,boltSpeed,Math.max(1,Math.floor(boss.atk*boltMult)),particleColor,false,'arcane'));
+      }
+      this.particles.burst(cx,cy,28,particleColor,3.3,.55,3.6);
+      this.particles.magic(cx,cy,magicColor);
+      this.screenFX.shake(8,.3);
+      this.screenFX.flash(flash,.15);
+      if(this.player.hp>0){onSurvive();Achievements.checkAll(this);}
+    }});
   },
 
   _bossAbilityRiftNova(boss){
-    const p=this.player;
-    const centerX=boss.x+.5,centerY=boss.y+.5;
-    const radius=4.5;
-    const dist=Util.dist(boss.x,boss.y,p.x,p.y);
-
-    if(dist<radius){
-      const intensity=1-dist/radius;
-      const dmg=Math.max(1,Math.floor(boss.atk*(.45+.35*intensity)));
-      this.damagePlayer(dmg,`${boss.name} uwalnia Szczelinową Novę!`,'damage');
-    }
-
-    for(let i=0;i<12;i++){
-      const a=Math.PI*2*(i/12);
-      this.projectiles.push(new Projectile(
-        centerX,centerY,
-        centerX+Math.cos(a)*8,
-        centerY+Math.sin(a)*8,
-        4.8,
-        Math.max(1,Math.floor(boss.atk*.55)),
-        '#9c7bff',
-        false,
-        'arcane'
-      ));
-    }
-
-    this.particles.burst(centerX,centerY,28,'#8f7bff',3.3,.55,3.6);
-    this.particles.magic(centerX,centerY,'#c7b5ff');
-    this.screenFX.shake(8,.32);
-    this.screenFX.flash('#ad8cff',.16);
-    this.log(`${boss.name} rozdziera przestrzeń Szczelinową Novą!`,'boss');
-
-    if(this.player.hp>0){
-      this._riftNovaSurvived=(this._riftNovaSurvived||0)+1;
-      Achievements.checkAll(this);
-    }
+    this._bossRadialBlast(boss,{radius:4.5,base:.45,scale:.35,bolts:12,ringOffset:0,boltReach:8,boltSpeed:4.8,boltMult:.55,
+      color:'#9c7bff',particleColor:'#9c7bff',magicColor:'#c7b5ff',flash:'#ad8cff',
+      logMsg:`${boss.name} rozdziera przestrzeń Szczelinową Novą!`,hitMsg:`${boss.name} uwalnia Szczelinową Novę!`,
+      onSurvive:()=>{this._riftNovaSurvived=(this._riftNovaSurvived||0)+1;}});
   },
 
   _bossAbilityObeliskStorm(boss){
-    const p=this.player;
-    const centerX=boss.x+.5,centerY=boss.y+.5;
-    const dist=Util.dist(boss.x,boss.y,p.x,p.y);
-    const stormRadius=5.3;
-
-    if(dist<stormRadius){
-      const intensity=1-dist/stormRadius;
-      const dmg=Math.max(1,Math.floor(boss.atk*(.4+.3*intensity)));
-      this.damagePlayer(dmg,`${boss.name} uwalnia Burzę Obelisku!`,'damage');
-    }
-
-    const bolts=10;
-    for(let i=0;i<bolts;i++){
-      const a=Math.PI*2*(i/bolts);
-      const ringX=centerX+Math.cos(a)*2.2;
-      const ringY=centerY+Math.sin(a)*2.2;
-      this.projectiles.push(new Projectile(
-        ringX,ringY,
-        ringX+Math.cos(a)*10,
-        ringY+Math.sin(a)*10,
-        5.2,
-        Math.max(1,Math.floor(boss.atk*.58)),
-        '#6f93ff',
-        false,
-        'arcane'
-      ));
-    }
-
-    this.particles.burst(centerX,centerY,26,'#6f93ff',3.2,.5,3.5);
-    this.particles.magic(centerX,centerY,'#9cb6ff');
-    this.screenFX.shake(8,.28);
-    this.screenFX.flash('#89a8ff',.14);
-    this.log(`${boss.name} przyzywa Burzę Obelisku!`,'boss');
-
-    if(this.player.hp>0){
-      this._obeliskStormSurvived=(this._obeliskStormSurvived||0)+1;
-      Achievements.checkAll(this);
-    }
-  },
-
-  _bossAbilityBreath(boss){
-    const p=this.player;
-    const ba=Util.angle(boss.x,boss.y,p.x,p.y);
-    for(let i=0;i<8;i++){
-      const spread=ba+Util.randF(-.5,.5);
-      this.projectiles.push(new Projectile(boss.x+.5,boss.y+.5,boss.x+Math.cos(spread)*10,boss.y+Math.sin(spread)*10,4,Math.floor(boss.atk*.7),Util.pick(['#f80','#f40','#ff0']),false,'fire'));
-    }
-    this.log(`${boss.name} zionie ogniem!`,'boss');
+    this._bossRadialBlast(boss,{radius:5.3,base:.4,scale:.3,bolts:10,ringOffset:2.2,boltReach:10,boltSpeed:5.2,boltMult:.58,
+      color:'#6f93ff',particleColor:'#6f93ff',magicColor:'#9cb6ff',flash:'#89a8ff',
+      logMsg:`${boss.name} przyzywa Burzę Obelisku!`,hitMsg:`${boss.name} uwalnia Burzę Obelisku!`,
+      onSurvive:()=>{this._obeliskStormSurvived=(this._obeliskStormSurvived||0)+1;}});
   },
 
   _bossAbilityStomp(boss){
@@ -172,7 +164,7 @@ Object.assign(Game, {
 
   _triggerBossAbility(boss,ability,dist){
     const handlers={
-      charge:()=>this._bossAbilityCharge(boss,dist),
+      charge:()=>this._bossAbilityCharge(boss),
       summon:()=>this._bossAbilitySummon(boss),
       fireball:()=>this._bossAbilityFireball(boss),
       teleport:()=>this._bossAbilityTeleport(boss),
@@ -207,8 +199,10 @@ Object.assign(Game, {
 
   _bossFallbackCombatAndChase(boss,dt,dist){
     const p=this.player;
+    // zwykły cios bossa ma ten sam rozmach z kręgiem co zwykli wrogowie (dawniej bił natychmiast)
+    if(this._updateEnemyWindup(boss,dt,dist))return;
     if(dist<1.5&&boss.attackTimer<=0){
-      this._enemyAttack(boss);
+      this._startEnemyWindup(boss);
     }else if(dist>1.5){
       this._moveToward(boss,p.x,p.y,dt);
     }
