@@ -117,6 +117,14 @@ Object.assign(Game, {
         return;
       }
       
+      // okno wyboru nagrody: cyfry 1–4 wybierają kartę (zamiast rzucać zaklęcia)
+      if(GrimoireUI.isOpen()&&!document.getElementById('settings-panel').classList.contains('open')&&
+         e.key>='1'&&e.key<='4'&&e.key.length===1){
+        e.preventDefault();
+        if(!e.repeat)GrimoireUI.pickByIndex(Number(e.key)-1);
+        return;
+      }
+
       // prevent default for Tab and F-keys immediately
       if(e.key==='Tab'||e.key==='F3'||e.key==='F5'||e.key==='F9'){e.preventDefault();e.stopPropagation();}
       

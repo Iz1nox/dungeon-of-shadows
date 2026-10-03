@@ -21,6 +21,14 @@ Object.assign(Game, {
   openChangelog(){
     if(this.sound&&this.sound.ui)this.sound.ui();
     const versions=[
+      {v:'2.5',title:'Grimuar: nowe karty nagród',items:[
+        'Awans, relikt i kapliczka jako karty z księgi zaklęć — z ikoną, opisem i kategorią',
+        'Woskowe pieczęcie i poświata pokazują rzadkość nagrody',
+        'Niedostępne opcje są wyszarzone z powodem (np. „Brakuje 30 💰”, „Limit reliktów”)',
+        'Klawisze 1–4 wybierają kartę',
+        'Ochrona przed przypadkowym wyborem tuż po otwarciu okna',
+        'Przycisk „Pomiń” przy reliktach',
+      ]},
       {v:'2.4',title:'Remaster: czucie gry',items:[
         'Płynny ruch z rozpędem i hamowaniem',
         'Unik na Spacji: krótki doskok z nietykalnością, odnawia się co 1 s',
