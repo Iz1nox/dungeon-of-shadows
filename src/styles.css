@@ -88,8 +88,8 @@ canvas{display:block;image-rendering:pixelated;cursor:crosshair}
 #win-screen h1{font-family:var(--serif);font-size:48px;color:var(--gold);text-shadow:0 0 30px #e8b24a,0 0 60px #a4791a;margin-bottom:20px}
 #win-screen button{font-family:var(--serif);padding:12px 36px;font-size:16px;background:linear-gradient(to bottom,#5b4622,#2e2310);color:#ffe7b3;border:2px solid var(--brass-lt);border-radius:6px;cursor:pointer;margin-top:20px;transition:all .2s}
 #win-screen button:hover{background:linear-gradient(to bottom,#8a6d3b,#5b4622);border-color:var(--gold);transform:scale(1.05)}
-#level-up-screen{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:50;background:var(--panel-bg);border:2px solid rgba(201,168,90,.5);border-radius:10px;padding:30px;color:var(--parch);text-align:center;display:none;min-width:400px;box-shadow:var(--panel-shadow),0 0 40px rgba(232,178,74,.12)}
-#level-up-screen h2{font-family:var(--serif);color:var(--gold);font-size:28px;margin-bottom:15px;text-shadow:0 0 15px rgba(232,178,74,.5)}
+/* wygląd okna wyboru: ui-grimoire.css (.gr-book); tu tylko położenie */
+#level-up-screen{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:50;text-align:center;display:none;min-width:400px;width:max-content;max-width:min(760px,calc(100vw - 32px));box-sizing:border-box}
 #level-up-screen .choices{display:flex;gap:15px;margin-top:15px;flex-wrap:wrap;justify-content:center}
 #level-up-screen .choice-btn{padding:12px 20px;background:linear-gradient(to bottom,#352a1f,#1c160f);border:1px solid var(--brass);border-radius:6px;color:var(--parch);cursor:pointer;font-size:13px;transition:all .2s;min-width:130px}
 #level-up-screen .choice-btn:hover{background:linear-gradient(to bottom,#4d3e2c,#2a2117);transform:scale(1.05);border-color:var(--gold);color:#fff3cf}

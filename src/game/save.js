@@ -505,7 +505,7 @@ Object.assign(Game, {
     document.getElementById('settings-panel').classList.remove('open');
     document.getElementById('meta-panel').classList.remove('open');
     // otwarty wybór awansu/reliktu albo sklep należą do porzucanego stanu gry
-    document.getElementById('level-up-screen').style.display='none';
+    GrimoireUI.close(); // anuluje też wybór w trakcie błysku — nagroda nie wpadnie do wczytanej gry
     document.getElementById('shop-panel').classList.remove('open');
     this._pendingLevelUps=0;
     this.keys={};

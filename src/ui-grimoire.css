@@ -1,0 +1,86 @@
+/* =============================================
+   GRIMUAR (2.5) — wspólny język wizualny UI:
+   skórzana oprawa, pergaminowe strony i karty, woskowe pieczęcie.
+   Tylko czcionki systemowe — gra działa offline po podwójnym kliknięciu.
+   ============================================= */
+:root{
+  --gr-parch-1:#ecdcb4; --gr-parch-2:#cdb27c;
+  --gr-ink:#3a2a14; --gr-ink-soft:#5a4426;
+  --gr-leather-1:#3a2216; --gr-leather-2:#1e110a;
+  --gr-tool:#8a6a34; --gr-tool-lt:#e8c878;
+  --gr-wax-common:#7a6a58; --gr-wax-rare:#2a5ab0; --gr-wax-epic:#7a3ab0; --gr-wax-legendary:#c8841a;
+  --gr-wax-red:#a8281a;
+  --gr-serif:Georgia,'Times New Roman',serif;
+}
+
+/* ---- oprawa okna ---- */
+.gr-book{
+  background:linear-gradient(180deg,var(--gr-leather-1),var(--gr-leather-2));
+  border:none;border-radius:8px;padding:14px 18px 18px;color:var(--gr-parch-1);
+  box-shadow:0 14px 34px rgba(0,0,0,.8),inset 0 0 0 2px #6b4a24,inset 0 0 0 4px #24140b,inset 0 0 0 5px var(--gr-tool);
+}
+.gr-title{text-align:center;font-family:var(--gr-serif);font-style:italic;color:var(--gr-tool-lt);font-size:26px;margin:6px 0 2px;text-shadow:0 1px 0 #000}
+.gr-sub{text-align:center;font-family:var(--gr-serif);font-style:italic;color:#b8955a;font-size:12px;margin-bottom:14px}
+.gr-page{
+  background:linear-gradient(170deg,var(--gr-parch-1),var(--gr-parch-2));border-radius:3px;padding:12px 14px;
+  color:var(--gr-ink);font-family:var(--gr-serif);box-shadow:inset 0 0 26px rgba(120,80,30,.4);
+}
+
+/* ---- karty nagród ---- */
+.gr-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;padding:8px 6px}
+.gr-card{
+  width:148px;min-height:176px;box-sizing:border-box;position:relative;cursor:pointer;
+  background:linear-gradient(170deg,var(--gr-parch-1),var(--gr-parch-2));border-radius:3px;
+  padding:16px 11px 12px;text-align:center;color:var(--gr-ink);font-family:var(--gr-serif);
+  box-shadow:0 6px 14px rgba(0,0,0,.6),inset 0 0 22px rgba(120,80,30,.35);
+  transform:rotate(var(--gr-tilt,0deg));
+  transition:transform .12s ease-out,box-shadow .12s ease-out,filter .12s ease-out;
+  animation:gr-card-in .18s ease-out both;animation-delay:var(--gr-delay,0ms);
+  outline:none;
+}
+.gr-card:nth-child(3n+1){--gr-tilt:-1.2deg}
+.gr-card:nth-child(3n+2){--gr-tilt:.8deg}
+.gr-card:nth-child(3n){--gr-tilt:-.5deg}
+.gr-card:hover,.gr-card:focus-visible{transform:translateY(-5px) rotate(0deg);box-shadow:0 12px 22px rgba(0,0,0,.7),inset 0 0 22px rgba(120,80,30,.3)}
+@keyframes gr-card-in{from{opacity:0;translate:0 10px}to{opacity:1;translate:0 0}}
+
+.gr-key{position:absolute;left:7px;top:5px;font-size:10px;color:var(--gr-ink-soft);opacity:.7}
+.gr-ic{font-size:32px;margin:2px 0 4px;filter:sepia(.35)}
+.gr-nm{font-weight:bold;font-size:14px;color:#4a2a10}
+.gr-ds{font-size:11px;margin-top:6px;line-height:1.35;color:var(--gr-ink-soft);font-style:italic}
+.gr-cat{margin-top:9px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gr-ink-soft)}
+.gr-cost{margin-top:6px;font-size:11px;font-weight:bold;color:#6a4a10}
+.gr-why{margin-top:8px;font-size:10px;color:#7a1a10;font-weight:bold}
+
+.gr-seal{
+  position:absolute;right:-9px;top:-9px;width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:rgba(255,240,225,.9);
+  box-shadow:0 2px 4px rgba(0,0,0,.55);background:radial-gradient(circle at 35% 35%,#a8988a,var(--gr-wax-common));
+}
+.gr-r-rare .gr-seal{background:radial-gradient(circle at 35% 35%,#5a8ae0,var(--gr-wax-rare))}
+.gr-r-epic .gr-seal{background:radial-gradient(circle at 35% 35%,#a86ae0,var(--gr-wax-epic))}
+.gr-r-legendary .gr-seal{background:radial-gradient(circle at 35% 35%,#f0b850,var(--gr-wax-legendary))}
+.gr-card.gr-r-rare{box-shadow:0 6px 14px rgba(0,0,0,.6),0 0 0 1px rgba(42,90,176,.5),inset 0 0 22px rgba(120,80,30,.35)}
+.gr-card.gr-r-epic{box-shadow:0 6px 14px rgba(0,0,0,.6),0 0 14px rgba(122,58,176,.45),inset 0 0 22px rgba(120,80,30,.35)}
+.gr-card.gr-r-legendary{box-shadow:0 6px 14px rgba(0,0,0,.6),0 0 18px rgba(232,160,40,.6),inset 0 0 22px rgba(160,100,20,.35)}
+
+.gr-card.is-disabled{filter:grayscale(.75) brightness(.72);cursor:not-allowed}
+.gr-card.is-disabled:hover{transform:rotate(var(--gr-tilt,0deg))}
+.gr-card.is-picked{transform:translateY(-8px) scale(1.06) rotate(0deg);box-shadow:0 0 0 2px var(--gr-tool-lt),0 0 26px rgba(232,200,120,.75),inset 0 0 22px rgba(120,80,30,.3)}
+
+/* ---- przyciski ---- */
+.gr-btn{
+  display:inline-block;padding:9px 22px;border-radius:3px;font-family:var(--gr-serif);font-size:14px;
+  color:#f0dcb0;background:linear-gradient(180deg,#4a2c1a,#2a170d);border:1px solid var(--gr-tool);cursor:pointer;
+  transition:filter .12s ease-out,transform .12s ease-out;
+}
+.gr-btn:hover{filter:brightness(1.18)}
+.gr-btn:active{transform:translateY(1px)}
+.gr-btn--primary{background:linear-gradient(180deg,#7a2418,#4a120a);border-color:#c0703a}
+.gr-actions{text-align:center;margin-top:12px}
+
+/* ---- ograniczony ruch: bez wejścia, uniesienia i błysku ---- */
+@media (prefers-reduced-motion: reduce){
+  .gr-card{animation:none;transition:none}
+  .gr-card:hover,.gr-card:focus-visible,.gr-card.is-picked{transform:rotate(var(--gr-tilt,0deg))}
+}

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dungeon of Shadows — Advanced Roguelike</title>
 <link rel="stylesheet" href="src/styles.css">
+<link rel="stylesheet" href="src/ui-grimoire.css">
 </head>
 <body>
 <div id="title-screen">
@@ -48,10 +49,9 @@ Esc — Ustawienia / Zapisz / Wczytaj | <span id="title-debug-key">F3</span> —
 <div style="color:#777;font-size:12px;margin-top:12px;max-width:520px">Otchłań to nieskończone piętra o rosnącej trudności — schodzisz tak głęboko, jak pozwolą ci siły. Esencję dusz zachowasz niezależnie od wyniku.</div>
 </div>
 
-<div id="level-up-screen">
-<h2>⬆️ AWANS!</h2>
+<div id="level-up-screen" class="gr-book">
 <div id="level-up-info"></div>
-<div id="level-up-choices" class="choices"></div>
+<div id="level-up-choices" class="gr-cards"></div>
 </div>
 
 <canvas id="gameCanvas"></canvas>
@@ -120,6 +120,7 @@ Esc — Ustawienia / Zapisz / Wczytaj | <span id="title-debug-key">F3</span> —
 <script src="src/sound.js"></script>
 <script src="src/meta.js"></script>
 <script src="src/bestiary.js"></script>
+<script src="src/ui-grimoire.js"></script>
 <!-- Main Game object, split by domain (core first, init last) -->
 <script src="src/game/core.js"></script>
 <script src="src/game/lifecycle.js"></script>

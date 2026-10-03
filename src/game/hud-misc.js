@@ -148,7 +148,7 @@ Object.assign(Game, {
   gameOver(){
     if(!this.running)return; // kilka trafień w tej samej klatce = jedna śmierć i jedna nagroda esencji
     this.running=false;
-    document.getElementById('level-up-screen').style.display='none';
+    GrimoireUI.close();
     this._pendingLevelUps=0;
     this.sound.stopAmbient();
     this.sound.death();
