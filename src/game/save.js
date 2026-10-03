@@ -712,6 +712,7 @@ Object.assign(Game, {
   _restoreEntitiesFromSave(saveData){
     this.minions=[]; // summons are transient and never serialized
     this._playerFocusTarget=null;
+    this._resetMovementState();
     const loadedEnemies=Array.isArray(saveData.enemies)?saveData.enemies:[];
     this.enemies=loadedEnemies.map(e=>({
       ...e,

@@ -282,6 +282,7 @@ Object.assign(Game, {
     this._lastObeliskFloor=0;
     this._fpsSmoothed=60;
     this.initPlayer(playerClass);
+    this._resetMovementState();
     Achievements.reset();
     this.generateFloor();
     this.initInput();

@@ -166,31 +166,6 @@ Object.assign(Game, {
     return this._normalizeDiagonalInputVector(dx,dy);
   },
 
-  _computePlayerMoveTarget(p,dx,dy,dt){
-    let speed=p.speed*(p.stealthTimer>0?0.7:1);
-    // water slows movement — applied BEFORE collision so it never bypasses walls
-    const tx=Math.floor(p.x+.5),ty=Math.floor(p.y+.5);
-    const curTile=this.dungeon.map[ty]?this.dungeon.map[ty][tx]:0;
-    if(curTile===TILE.WATER)speed*=0.5;
-    return{
-      nx:p.x+dx*speed*dt,
-      ny:p.y+dy*speed*dt
-    };
-  },
-
-  _applyPlayerCollisionMovement(p,nx,ny){
-    if(this.dungeon.isPassable(Math.floor(nx+.3),Math.floor(p.y+.3))&&
-       this.dungeon.isPassable(Math.floor(nx+.7),Math.floor(p.y+.7))&&
-       this.dungeon.isPassable(Math.floor(nx+.3),Math.floor(p.y+.7))&&
-       this.dungeon.isPassable(Math.floor(nx+.7),Math.floor(p.y+.3)))
-      p.x=nx;
-    if(this.dungeon.isPassable(Math.floor(p.x+.3),Math.floor(ny+.3))&&
-       this.dungeon.isPassable(Math.floor(p.x+.7),Math.floor(ny+.7))&&
-       this.dungeon.isPassable(Math.floor(p.x+.3),Math.floor(ny+.7))&&
-       this.dungeon.isPassable(Math.floor(p.x+.7),Math.floor(ny+.3)))
-      p.y=ny;
-  },
-
   _updatePlayerAnimationState(p,dx,dy,dt){
     if(dx!==0)p.facing=dx>0?1:-1;
     p.animState=(dx||dy)?'walk':'idle';

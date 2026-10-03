@@ -3,10 +3,8 @@ Object.assign(Game, {
   updatePlayer(dt){
     const p=this.player;
     this._unstickPlayer();
-    const {dx,dy}=this._getPlayerInputVector();
-    const {nx,ny}=this._computePlayerMoveTarget(p,dx,dy,dt);
     const ox=p.x,oy=p.y;
-    this._applyPlayerCollisionMovement(p,nx,ny);
+    const {dx,dy}=this._updatePlayerMovement(p,dt);
     if(dt>0){
       // wygładzona prędkość gracza — strzelcy używają jej do celowania z wyprzedzeniem
       this._playerVelX=Util.lerp(this._playerVelX||0,(p.x-ox)/dt,.25);
